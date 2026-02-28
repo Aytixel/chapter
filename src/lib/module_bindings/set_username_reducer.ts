@@ -7,9 +7,9 @@ import {
     TypeBuilder as __TypeBuilder,
     t as __t,
     type AlgebraicTypeType as __AlgebraicTypeType,
-    type Infer as __Infer,
+    type Infer as __Infer
 } from "spacetimedb";
 
-export default __t.row({
-    name: __t.string(),
-});
+export default {
+    username: __t.option(__t.string())
+};

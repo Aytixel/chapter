@@ -7,10 +7,23 @@ import {
     TypeBuilder as __TypeBuilder,
     t as __t,
     type AlgebraicTypeType as __AlgebraicTypeType,
-    type Infer as __Infer,
+    type Infer as __Infer
 } from "spacetimedb";
 
-export const Person = __t.object("Person", {
-    name: __t.string(),
+export const User = __t.object("User", {
+    identity: __t.identity(),
+    get status() {
+        return UserStatus;
+    },
+    username: __t.option(__t.string()),
+    avatar: __t.option(__t.byteArray())
 });
-export type Person = __Infer<typeof Person>;
+export type User = __Infer<typeof User>;
+
+// The tagged union or sum type for the algebraic type `UserStatus`.
+export const UserStatus = __t.enum("UserStatus", {
+    Online: __t.unit(),
+    Offline: __t.timestamp(),
+    OnCall: __t.unit()
+});
+export type UserStatus = __Infer<typeof UserStatus>;
