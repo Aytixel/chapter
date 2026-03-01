@@ -10,13 +10,41 @@ import {
     type Infer as __Infer
 } from "spacetimedb";
 
+export const Group = __t.object("Group", {
+    id: __t.u256(),
+    owner: __t.identity(),
+    name: __t.string(),
+    users: __t.array(__t.identity())
+});
+export type Group = __Infer<typeof Group>;
+
+export const Message = __t.object("Message", {
+    id: __t.u256(),
+    get receiver() {
+        return ReceiverIdentity;
+    },
+    sender: __t.identity(),
+    message: __t.string(),
+    createdAt: __t.timestamp(),
+    updatedAt: __t.timestamp()
+});
+export type Message = __Infer<typeof Message>;
+
+// The tagged union or sum type for the algebraic type `ReceiverIdentity`.
+export const ReceiverIdentity = __t.enum("ReceiverIdentity", {
+    User: __t.identity(),
+    Group: __t.u256()
+});
+export type ReceiverIdentity = __Infer<typeof ReceiverIdentity>;
+
 export const User = __t.object("User", {
     identity: __t.identity(),
     get status() {
         return UserStatus;
     },
     username: __t.option(__t.string()),
-    avatar: __t.option(__t.byteArray())
+    avatar: __t.option(__t.byteArray()),
+    groups: __t.array(__t.u256())
 });
 export type User = __Infer<typeof User>;
 

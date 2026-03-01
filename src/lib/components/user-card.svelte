@@ -1,32 +1,30 @@
 <script lang="ts">
     import type { User } from "$lib/module_bindings/types";
     import { useReducer, useSpacetimeDB } from "spacetimedb/svelte";
-    import AvatarFallback from "./ui/avatar/avatar-fallback.svelte";
-    import AvatarImage from "./ui/avatar/avatar-image.svelte";
-    import Avatar from "./ui/avatar/avatar.svelte";
-    import Badge from "./ui/badge/badge.svelte";
-    import Button from "./ui/button/button.svelte";
-    import HoverCardContent from "./ui/hover-card/hover-card-content.svelte";
-    import HoverCardTrigger from "./ui/hover-card/hover-card-trigger.svelte";
-    import HoverCard from "./ui/hover-card/hover-card.svelte";
-    import ItemContent from "./ui/item/item-content.svelte";
-    import ItemMedia from "./ui/item/item-media.svelte";
-    import ItemTitle from "./ui/item/item-title.svelte";
-    import Item from "./ui/item/item.svelte";
+    import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
+    import { Badge } from "./ui/badge";
+    import { Button } from "./ui/button";
+    import { HoverCard, HoverCardContent, HoverCardTrigger } from "./ui/hover-card";
+    import { Item, ItemContent, ItemMedia, ItemTitle } from "./ui/item";
     import { CalendarDays } from "@lucide/svelte";
-    import { reducers } from "$lib/module_bindings";
-    import Input from "./ui/input/input.svelte";
+    import { Input } from "./ui/input";
     import { Label } from "./ui/label";
+    import { getUsername } from "$lib/user";
+    import { reducers } from "$lib/module_bindings";
 
     const conn = useSpacetimeDB();
     const setUsername = useReducer(reducers.setUsername);
     const setAvatar = useReducer(reducers.setAvatar);
 
     const uid = $props.id();
-    const { user, onclick }: { user: User; onclick?: () => void } = $props();
+    const {
+        user,
+        variant,
+        class: classname
+    }: { user: User; variant?: "default" | "icon"; class?: string } = $props();
 
     const me = $derived($conn.identity?.isEqual(user.identity));
-    const username = $derived(`${user.username || user.identity.toString()}${me ? " (Vous)" : ""}`);
+    const username = $derived(getUsername(user, me));
     const avatar_blob = $derived(
         user.avatar &&
             URL.createObjectURL(
@@ -36,23 +34,26 @@
             )
     );
 
-    const status_color = $derived(
+    const { status, status_color } = $derived(
         user.status.tag == "Online"
-            ? "bg-green-500"
+            ? {
+                  status: "Disponible",
+                  status_color: "bg-green-500"
+              }
             : user.status.tag == "OnCall"
-              ? "bg-red-500"
+              ? {
+                    status: "En appel",
+                    status_color: "bg-red-500"
+                }
               : user.status.tag == "Offline"
-                ? "bg-gray-500"
-                : "bg-background"
-    );
-    const status = $derived(
-        user.status.tag == "Online"
-            ? "Connecter"
-            : user.status.tag == "OnCall"
-              ? "En appel"
-              : user.status.tag == "Offline"
-                ? "Déconnecter"
-                : "Inconnue"
+                ? {
+                      status: "Déconnecter",
+                      status_color: "bg-gray-500"
+                  }
+                : {
+                      status: "Inconnue",
+                      status_color: "bg-background"
+                  }
     );
 
     let new_username = $state<string>();
@@ -94,9 +95,15 @@
 </script>
 
 <HoverCard>
-    <HoverCardTrigger {onclick}>
-        <Item class="grid grid-cols-[auto_1fr] p-1 transition-colors hover:bg-muted" size="sm">
-            <ItemMedia class="relative">
+    <Item
+        class={[
+            variant == "icon" ? "w-fit p-0" : "grid grid-cols-[auto_1fr] p-1 transition-colors",
+            classname
+        ]}
+        size="sm"
+    >
+        <ItemMedia class="relative translate-0!">
+            <HoverCardTrigger>
                 <Avatar class="border">
                     <AvatarImage src={avatar_blob} alt={username} />
                     <AvatarFallback>{username.toString()[0].toUpperCase()}</AvatarFallback>
@@ -104,14 +111,18 @@
                 <div
                     class={["absolute right-0 bottom-0 size-2.5 rounded-full border", status_color]}
                 ></div>
-            </ItemMedia>
+            </HoverCardTrigger>
+        </ItemMedia>
+        {#if variant != "icon"}
             <ItemContent class="w-full min-w-0">
-                <ItemTitle class="block w-full overflow-hidden text-nowrap text-ellipsis">
+                <ItemTitle
+                    class="block w-full cursor-default overflow-hidden text-nowrap text-ellipsis"
+                >
                     {username}
                 </ItemTitle>
             </ItemContent>
-        </Item>
-    </HoverCardTrigger>
+        {/if}
+    </Item>
     <HoverCardContent side="bottom" align="start" class="w-96">
         <div class="grid grid-cols-[auto_1fr] items-center">
             <Label class={[me && "cursor-pointer"]} for="{uid}-avatar-input">

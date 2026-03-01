@@ -9,14 +9,8 @@ import {
     type AlgebraicTypeType as __AlgebraicTypeType,
     type Infer as __Infer
 } from "spacetimedb";
-import { UserStatus } from "./types";
 
-export default __t.row({
-    identity: __t.identity().primaryKey(),
-    get status() {
-        return UserStatus;
-    },
-    username: __t.option(__t.string()),
-    avatar: __t.option(__t.byteArray()),
-    groups: __t.array(__t.u256())
-});
+export default {
+    messageId: __t.u256(),
+    message: __t.string()
+};

@@ -34,12 +34,17 @@ import {
 } from "spacetimedb";
 
 // Import all reducer arg schemas
+import DeleteMessageReducer from "./delete_message_reducer";
+import SendMessageReducer from "./send_message_reducer";
 import SetAvatarReducer from "./set_avatar_reducer";
 import SetUsernameReducer from "./set_username_reducer";
+import UpdateMessageReducer from "./update_message_reducer";
 
 // Import all procedure arg schemas
 
 // Import all table schema definitions
+import GroupsRow from "./groups_table";
+import MessagesRow from "./messages_table";
 import UserRow from "./user_table";
 
 /** Type-only namespace exports for generated type groups. */
@@ -55,13 +60,32 @@ const tablesSchema = __schema({
             ]
         },
         UserRow
+    ),
+    groups: __table(
+        {
+            name: "groups",
+            indexes: [],
+            constraints: []
+        },
+        GroupsRow
+    ),
+    messages: __table(
+        {
+            name: "messages",
+            indexes: [],
+            constraints: []
+        },
+        MessagesRow
     )
 });
 
 /** The schema information for all reducers in this module. This is defined the same way as the reducers would have been defined in the server, except the body of the reducer is omitted in code generation. */
 const reducersSchema = __reducers(
+    __reducerSchema("delete_message", DeleteMessageReducer),
+    __reducerSchema("send_message", SendMessageReducer),
     __reducerSchema("set_avatar", SetAvatarReducer),
-    __reducerSchema("set_username", SetUsernameReducer)
+    __reducerSchema("set_username", SetUsernameReducer),
+    __reducerSchema("update_message", UpdateMessageReducer)
 );
 
 /** The schema information for all procedures in this module. This is defined the same way as the procedures would have been defined in the server. */

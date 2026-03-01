@@ -6,8 +6,14 @@
 import { type Infer as __Infer } from "spacetimedb";
 
 // Import all reducer arg schemas
+import DeleteMessageReducer from "../delete_message_reducer";
+import SendMessageReducer from "../send_message_reducer";
 import SetAvatarReducer from "../set_avatar_reducer";
 import SetUsernameReducer from "../set_username_reducer";
+import UpdateMessageReducer from "../update_message_reducer";
 
+export type DeleteMessageParams = __Infer<typeof DeleteMessageReducer>;
+export type SendMessageParams = __Infer<typeof SendMessageReducer>;
 export type SetAvatarParams = __Infer<typeof SetAvatarReducer>;
 export type SetUsernameParams = __Infer<typeof SetUsernameReducer>;
+export type UpdateMessageParams = __Infer<typeof UpdateMessageReducer>;
