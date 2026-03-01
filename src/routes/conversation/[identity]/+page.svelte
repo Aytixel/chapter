@@ -3,13 +3,15 @@
     import type { PageProps } from "./$types";
     import { Identity } from "spacetimedb";
     import { reducers, tables } from "$lib/module_bindings";
-    import { getUsername } from "$lib/user";
+    import { getUsersMap, getUserUsername } from "$lib/user";
     import { Separator } from "$lib/components/ui/separator";
     import UserCard from "$lib/components/user-card.svelte";
     import { ScrollArea } from "$lib/components/ui/scroll-area";
     import { InputGroup, InputGroupTextarea } from "$lib/components/ui/input-group";
-    import { Message, type ReceiverIdentity } from "$lib/module_bindings/types";
+    import { Message, User, type ReceiverIdentity } from "$lib/module_bindings/types";
     import MessageComponent from "$lib/components/message.svelte";
+    import GroupCard from "$lib/components/group-card.svelte";
+    import { getGroupName } from "$lib/group";
 
     const conn = useSpacetimeDB();
     const [users] = useTable(tables.user);
@@ -17,25 +19,27 @@
     const [messages] = useTable(tables.messages);
     const sendMessage = useReducer(reducers.sendMessage);
 
+    const users_map = $derived(getUsersMap($users as User[]));
+
     const { params }: PageProps = $props();
 
-    const { user, username, group, receiver } = $derived.by(() => {
+    const { user, username, group, groupname, receiver } = $derived.by(() => {
         const split = params.identity.split(":");
         const conversation_type = split[0];
-        const identity = Identity.fromString(split[1]);
         const user =
             conversation_type == "user"
-                ? $users.find((user) => user.identity.isEqual(identity))
+                ? $users.find((user) => user.identity.isEqual(Identity.fromString(split[1])))
                 : undefined;
         const group =
             conversation_type == "group"
-                ? $groups.find((group) => group.id == identity.__identity__)
+                ? $groups.find((group) => group.id == BigInt(split[1]))
                 : undefined;
 
         return {
             user,
-            username: user && getUsername(user, $conn.identity?.isEqual(user.identity)),
+            username: user && getUserUsername(user, $conn.identity?.isEqual(user.identity)),
             group,
+            groupname: group && getGroupName(group, users_map),
             receiver: (user
                 ? { tag: "User", value: user.identity }
                 : group
@@ -75,7 +79,7 @@
 
 <svelte:head>
     <title>
-        Conversation avec {username}
+        {username || groupname}
     </title>
 </svelte:head>
 
@@ -83,6 +87,9 @@
     <div class="flex">
         {#if user}
             <UserCard {user} />
+        {/if}
+        {#if group}
+            <GroupCard {group} />
         {/if}
     </div>
     <Separator />

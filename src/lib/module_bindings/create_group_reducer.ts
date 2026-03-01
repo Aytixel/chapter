@@ -10,10 +10,8 @@ import {
     type Infer as __Infer
 } from "spacetimedb";
 
-export default __t.row({
-    id: __t.u256(),
-    owner: __t.identity(),
+export default {
     name: __t.option(__t.string()),
     avatar: __t.option(__t.byteArray()),
-    users: __t.array(__t.identity())
-});
+    userIdentities: __t.array(__t.identity())
+};

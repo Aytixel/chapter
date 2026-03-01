@@ -6,14 +6,28 @@
 import { type Infer as __Infer } from "spacetimedb";
 
 // Import all reducer arg schemas
+import AddGroupUsersReducer from "../add_group_users_reducer";
+import CreateGroupReducer from "../create_group_reducer";
+import DeleteGroupReducer from "../delete_group_reducer";
 import DeleteMessageReducer from "../delete_message_reducer";
+import RemoveGroupUsersReducer from "../remove_group_users_reducer";
 import SendMessageReducer from "../send_message_reducer";
-import SetAvatarReducer from "../set_avatar_reducer";
-import SetUsernameReducer from "../set_username_reducer";
+import SetGroupAvatarReducer from "../set_group_avatar_reducer";
+import SetGroupNameReducer from "../set_group_name_reducer";
+import SetGroupOwnerReducer from "../set_group_owner_reducer";
+import SetUserAvatarReducer from "../set_user_avatar_reducer";
+import SetUserUsernameReducer from "../set_user_username_reducer";
 import UpdateMessageReducer from "../update_message_reducer";
 
+export type AddGroupUsersParams = __Infer<typeof AddGroupUsersReducer>;
+export type CreateGroupParams = __Infer<typeof CreateGroupReducer>;
+export type DeleteGroupParams = __Infer<typeof DeleteGroupReducer>;
 export type DeleteMessageParams = __Infer<typeof DeleteMessageReducer>;
+export type RemoveGroupUsersParams = __Infer<typeof RemoveGroupUsersReducer>;
 export type SendMessageParams = __Infer<typeof SendMessageReducer>;
-export type SetAvatarParams = __Infer<typeof SetAvatarReducer>;
-export type SetUsernameParams = __Infer<typeof SetUsernameReducer>;
+export type SetGroupAvatarParams = __Infer<typeof SetGroupAvatarReducer>;
+export type SetGroupNameParams = __Infer<typeof SetGroupNameReducer>;
+export type SetGroupOwnerParams = __Infer<typeof SetGroupOwnerReducer>;
+export type SetUserAvatarParams = __Infer<typeof SetUserAvatarReducer>;
+export type SetUserUsernameParams = __Infer<typeof SetUserUsernameReducer>;
 export type UpdateMessageParams = __Infer<typeof UpdateMessageReducer>;

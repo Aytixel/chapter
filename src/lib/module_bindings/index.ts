@@ -34,10 +34,17 @@ import {
 } from "spacetimedb";
 
 // Import all reducer arg schemas
+import AddGroupUsersReducer from "./add_group_users_reducer";
+import CreateGroupReducer from "./create_group_reducer";
+import DeleteGroupReducer from "./delete_group_reducer";
 import DeleteMessageReducer from "./delete_message_reducer";
+import RemoveGroupUsersReducer from "./remove_group_users_reducer";
 import SendMessageReducer from "./send_message_reducer";
-import SetAvatarReducer from "./set_avatar_reducer";
-import SetUsernameReducer from "./set_username_reducer";
+import SetGroupAvatarReducer from "./set_group_avatar_reducer";
+import SetGroupNameReducer from "./set_group_name_reducer";
+import SetGroupOwnerReducer from "./set_group_owner_reducer";
+import SetUserAvatarReducer from "./set_user_avatar_reducer";
+import SetUserUsernameReducer from "./set_user_username_reducer";
 import UpdateMessageReducer from "./update_message_reducer";
 
 // Import all procedure arg schemas
@@ -81,10 +88,17 @@ const tablesSchema = __schema({
 
 /** The schema information for all reducers in this module. This is defined the same way as the reducers would have been defined in the server, except the body of the reducer is omitted in code generation. */
 const reducersSchema = __reducers(
+    __reducerSchema("add_group_users", AddGroupUsersReducer),
+    __reducerSchema("create_group", CreateGroupReducer),
+    __reducerSchema("delete_group", DeleteGroupReducer),
     __reducerSchema("delete_message", DeleteMessageReducer),
+    __reducerSchema("remove_group_users", RemoveGroupUsersReducer),
     __reducerSchema("send_message", SendMessageReducer),
-    __reducerSchema("set_avatar", SetAvatarReducer),
-    __reducerSchema("set_username", SetUsernameReducer),
+    __reducerSchema("set_group_avatar", SetGroupAvatarReducer),
+    __reducerSchema("set_group_name", SetGroupNameReducer),
+    __reducerSchema("set_group_owner", SetGroupOwnerReducer),
+    __reducerSchema("set_user_avatar", SetUserAvatarReducer),
+    __reducerSchema("set_user_username", SetUserUsernameReducer),
     __reducerSchema("update_message", UpdateMessageReducer)
 );
 

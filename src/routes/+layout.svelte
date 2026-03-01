@@ -5,7 +5,7 @@
     import type { Identity } from "spacetimedb";
     import { DbConnection, type ErrorContext } from "$lib/module_bindings";
     import { Separator } from "$lib/components/ui/separator";
-    import ConversationList from "$lib/components/conversation-list.svelte";
+    import Sidebar from "$lib/components/sidebar.svelte";
 
     const HOST = import.meta.env.VITE_SPACETIMEDB_HOST ?? "ws://localhost:3000";
     const DB_NAME = import.meta.env.VITE_SPACETIMEDB_DB_NAME ?? "chapter";
@@ -43,7 +43,7 @@
 
 {#if $conn.isActive}
     <div class="grid h-dvh grid-cols-[auto_auto_1fr] gap-3 p-3">
-        <ConversationList />
+        <Sidebar />
         <Separator orientation="vertical" />
         {@render children()}
     </div>

@@ -13,7 +13,8 @@ import {
 export const Group = __t.object("Group", {
     id: __t.u256(),
     owner: __t.identity(),
-    name: __t.string(),
+    name: __t.option(__t.string()),
+    avatar: __t.option(__t.byteArray()),
     users: __t.array(__t.identity())
 });
 export type Group = __Infer<typeof Group>;

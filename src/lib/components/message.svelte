@@ -4,9 +4,10 @@
         ItemMedia,
         ItemContent,
         ItemTitle,
-        ItemDescription
+        ItemDescription,
+        ItemHeader
     } from "$lib/components/ui/item";
-    import { getUsername } from "$lib/user";
+    import { getUserUsername } from "$lib/user";
     import { Streamdown } from "svelte-streamdown";
     import StreamdownCode from "svelte-streamdown/code";
     import StreamdownMermaid from "svelte-streamdown/mermaid";
@@ -46,25 +47,27 @@
                     <UserCard {user} variant="icon" />
                 </ItemMedia>
                 <ItemContent>
-                    <ItemTitle class="text-xs">
-                        {getUsername(user, me)}
-                    </ItemTitle>
-                    <ItemDescription class="text-xs">
-                        {#if message.createdAt.toMillis() == message.updatedAt.toMillis()}
-                            {message.createdAt.toDate().toLocaleString()}
-                        {:else}
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger>
-                                        {message.createdAt.toDate().toLocaleString()} (modifié)
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        {message.updatedAt.toDate().toLocaleString()}
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                        {/if}
-                    </ItemDescription>
+                    <ItemHeader>
+                        <ItemTitle class="text-xs">
+                            {getUserUsername(user, me)}
+                        </ItemTitle>
+                        <ItemDescription class="text-xs">
+                            {#if message.createdAt.toMillis() == message.updatedAt.toMillis()}
+                                {message.createdAt.toDate().toLocaleString()}
+                            {:else}
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger>
+                                            {message.createdAt.toDate().toLocaleString()} (modifié)
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            {message.updatedAt.toDate().toLocaleString()}
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            {/if}
+                        </ItemDescription>
+                    </ItemHeader>
                     {#if modified_message === undefined}
                         <Streamdown
                             content={message.message}
@@ -87,7 +90,6 @@
                                     modified_message = undefined;
                                 }
                             }}
-                            placeholder="Envoyer un message..."
                             class="min-h-0"
                         />
                     {/if}
