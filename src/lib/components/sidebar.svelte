@@ -5,19 +5,19 @@
     import { Separator } from "./ui/separator";
     import UserCard from "./user-card.svelte";
     import { tables } from "$lib/module_bindings";
-    import CreateGroup from "./consersation-list/create-group.svelte";
+    import CreateGroupDialog from "./create-group-dialog.svelte";
     import GroupCard from "./group-card.svelte";
     import { getUsersMap, getUserUsername } from "$lib/user";
     import { getGroupName } from "$lib/group";
     import { Button } from "./ui/button";
     import type { User } from "$lib/module_bindings/types";
-    import { Moon, Sun } from "@lucide/svelte";
+    import { Moon, Sun, Users } from "@lucide/svelte";
 
     const conn = useSpacetimeDB();
     const [users] = useTable(tables.user);
     const [groups] = useTable(tables.groups);
 
-    const me = $derived($users.find((user) => $conn.identity?.isEqual(user.identity)));
+    const me = $derived($users.find((user) => $conn.identity?.equals(user.identity)));
     const users_map = $derived(getUsersMap($users as User[]));
 
     let search = $state("");
@@ -45,27 +45,33 @@
 <div class="grid h-full min-h-0 grid-rows-[auto_1fr] gap-3">
     <div class="flex gap-3">
         <Input type="search" placeholder="Rechercher..." bind:value={search} />
-        <CreateGroup />
+        <CreateGroupDialog>
+            {#snippet child({ props })}
+                <Button {...props} size="icon" class="cursor-pointer">
+                    <Users />
+                </Button>
+            {/snippet}
+        </CreateGroupDialog>
     </div>
     <ScrollArea class="h-full min-h-0">
         <div class="grid w-72 gap-1">
             {#if me}
-                <a href="/conversation/user:{me.identity.toString()}">
-                    <UserCard user={me} class="hover:bg-muted" />
+                <a href="/conversation/user:{me.identity.toString()}" class="cursor-pointer">
+                    <UserCard user={me} class="cursor-pointer hover:bg-muted" />
                 </a>
             {/if}
             {#if filtered_groups.length}
                 <Separator class="my-2" />
                 {#each filtered_groups as group}
                     <a href="/conversation/group:{group.id}">
-                        <GroupCard {group} class="hover:bg-muted" />
+                        <GroupCard {group} class="cursor-pointer hover:bg-muted" />
                     </a>
                 {/each}
             {/if}
             <Separator class="my-2" />
             {#each filtered_users as user}
-                <a href="/conversation/user:{user.identity.toString()}">
-                    <UserCard {user} class="hover:bg-muted" />
+                <a href="/conversation/user:{user.identity.toString()}" class="cursor-pointer">
+                    <UserCard {user} class="cursor-pointer hover:bg-muted" />
                 </a>
             {/each}
         </div>

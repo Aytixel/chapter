@@ -13,6 +13,8 @@
     import GroupCard from "$lib/components/group-card.svelte";
     import { getGroupName } from "$lib/group";
 
+    const { params }: PageProps = $props();
+
     const conn = useSpacetimeDB();
     const [users] = useTable(tables.user);
     const [groups] = useTable(tables.groups);
@@ -20,8 +22,6 @@
     const sendMessage = useReducer(reducers.sendMessage);
 
     const users_map = $derived(getUsersMap($users as User[]));
-
-    const { params }: PageProps = $props();
 
     const { user, username, group, groupname, receiver } = $derived.by(() => {
         const split = params.identity.split(":");
@@ -48,6 +48,10 @@
         };
     });
 
+    $effect(() => {
+        if (user == undefined && group == undefined) location.href = "/";
+    });
+
     function shouldDisplayMessage(message: Message): boolean {
         if (!receiver || !$conn.identity) return false;
 
@@ -68,11 +72,7 @@
     }
 
     const current_messages = $derived(
-        $messages
-            .filter(shouldDisplayMessage)
-            .sort((a: Message, b: Message) =>
-                Number(a.createdAt.toMillis() - b.createdAt.toMillis())
-            )
+        $messages.filter(shouldDisplayMessage).sort((a: Message, b: Message) => Number(a.id - b.id))
     );
     let new_message = $state("");
 </script>

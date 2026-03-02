@@ -26,30 +26,29 @@
     import { SquarePen, Trash } from "@lucide/svelte";
     import { Textarea } from "./ui/textarea";
 
+    const { message }: { message: Message } = $props();
+
     const conn = useSpacetimeDB();
-    const [users] = useTable(tables.user);
+    const [user] = useTable(tables.user.where((user) => user.identity.eq(message.sender)));
     const updateMessage = useReducer(reducers.updateMessage);
     const deleteMessage = useReducer(reducers.deleteMessage);
 
-    const { message }: { message: Message } = $props();
-
-    const me = $derived($conn.identity?.isEqual(message.sender));
-    const user = $derived($users.find((user) => message.sender.isEqual(user.identity)));
+    const is_me = $derived($conn.identity?.isEqual(message.sender));
 
     let modified_message = $state<string>();
 </script>
 
-{#if user}
+{#if $user[0]}
     <ContextMenu>
         <ContextMenuTrigger class="w-full">
             <Item variant="outline" size="sm" class="p-1">
                 <ItemMedia class="translate-0!">
-                    <UserCard {user} variant="icon" />
+                    <UserCard user={$user[0]} variant="icon" />
                 </ItemMedia>
                 <ItemContent>
                     <ItemHeader>
                         <ItemTitle class="text-xs">
-                            {getUserUsername(user, me)}
+                            {getUserUsername($user[0], is_me)}
                         </ItemTitle>
                         <ItemDescription class="text-xs">
                             {#if message.createdAt.toMillis() == message.updatedAt.toMillis()}
@@ -96,7 +95,7 @@
                 </ItemContent>
             </Item>
         </ContextMenuTrigger>
-        {#if me}
+        {#if is_me}
             <ContextMenuContent>
                 <ContextMenuItem
                     class="flex justify-between"

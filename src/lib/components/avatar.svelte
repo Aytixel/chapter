@@ -1,4 +1,5 @@
 <script lang="ts">
+    import type { ClassValue } from "svelte/elements";
     import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
     import { Label } from "./ui/label";
 
@@ -6,18 +7,21 @@
     const {
         src,
         alt,
+        class: classname,
         variant,
-        onfile
+        onfile,
+        ...props
     }: {
         src?: string;
         alt?: string;
+        class?: ClassValue | null;
         variant?: "default" | "square";
         onfile?: (file?: File) => void;
     } = $props();
 </script>
 
 {#snippet avatar()}
-    <Avatar class={["border", variant == "square" && "rounded-md"]}>
+    <Avatar {...props} class={["border", variant == "square" && "rounded-md", classname]}>
         <AvatarImage {src} {alt} />
         <AvatarFallback class={[variant == "square" && "rounded-md"]}>
             {alt && alt.toString()[0].toUpperCase()}

@@ -179,7 +179,7 @@ pub fn create_group(
     user_identities: Vec<Identity>,
 ) -> Result<(), String> {
     let Some(user) = get_user(ctx, ctx.sender()) else {
-        return Err("Cannot create group with unknown user".to_string());
+        return Err("Cannot create group for unknown user".to_string());
     };
 
     let mut groups: HashSet<u256> = HashSet::from_iter(user.groups);
@@ -212,7 +212,12 @@ pub fn delete_group(ctx: &ReducerContext, group_id: u256) -> Result<(), String> 
         return Err("Cannot delete unknown group".to_string());
     };
 
-    if get_user(ctx, group.owner).is_none() {
+    check_in_group(ctx, &group)?;
+
+    if get_user(ctx, ctx.sender())
+        .map(|user| user.identity != group.owner)
+        .unwrap_or(true)
+    {
         return Err("Cannot delete group if your are not owner".to_string());
     }
 
@@ -231,6 +236,10 @@ pub fn delete_group(ctx: &ReducerContext, group_id: u256) -> Result<(), String> 
         });
     }
 
+    ctx.db
+        .message()
+        .receiver()
+        .delete(ReceiverIdentity::Group { id: group_id });
     ctx.db.group().id().delete(group_id);
 
     Ok(())
@@ -249,6 +258,8 @@ pub fn add_group_users(
     let Some(group) = get_group(ctx, group_id) else {
         return Err("Cannot add users for unknown group".to_string());
     };
+
+    check_in_group(ctx, &group)?;
 
     let mut users: HashSet<Identity> = HashSet::from_iter(group.users);
 
@@ -288,6 +299,8 @@ pub fn remove_group_users(
     let Some(group) = get_group(ctx, group_id) else {
         return Err("Cannot remove users for unknown group".to_string());
     };
+
+    check_in_group(ctx, &group)?;
 
     let mut users: HashSet<Identity> = HashSet::from_iter(group.users);
 
@@ -329,7 +342,9 @@ pub fn set_group_owner(
         return Err("Cannot set owner for unknown group".to_string());
     };
 
-    if group.owner == ctx.sender() {
+    check_in_group(ctx, &group)?;
+
+    if group.owner != ctx.sender() {
         return Err("Only group owner can set group owner".to_string());
     }
 
@@ -354,6 +369,8 @@ pub fn set_group_name(
     let Some(group) = get_group(ctx, group_id) else {
         return Err("Cannot set name for unknown group".to_string());
     };
+
+    check_in_group(ctx, &group)?;
 
     ctx.db.group().id().update(Group {
         name: name
@@ -381,6 +398,8 @@ pub fn set_group_avatar(
         return Err("Cannot set avatar for unknown group".to_string());
     };
 
+    check_in_group(ctx, &group)?;
+
     ctx.db.group().id().update(Group { avatar, ..group });
 
     Ok(())
@@ -388,6 +407,18 @@ pub fn set_group_avatar(
 
 fn get_group(ctx: &ReducerContext, group_id: u256) -> Option<Group> {
     ctx.db.group().id().find(group_id)
+}
+
+fn check_in_group(ctx: &ReducerContext, group: &Group) -> Result<(), String> {
+    if group
+        .users
+        .iter()
+        .all(|user_identity| user_identity != &ctx.sender())
+    {
+        return Err("Cannot send message to groups you are not part of".to_string());
+    }
+
+    Ok(())
 }
 
 #[spacetimedb::reducer]
@@ -404,8 +435,12 @@ pub fn send_message(
         {
             return Err("Cannot send message to unknown user".to_string());
         }
-        ReceiverIdentity::Group { id } if ctx.db.group().id().find(id).is_none() => {
-            return Err("Cannot send message to unknown group".to_string());
+        ReceiverIdentity::Group { id } => {
+            if let Some(group) = ctx.db.group().id().find(id) {
+                check_in_group(ctx, &group)?;
+            } else {
+                return Err("Cannot send message to unknown group".to_string());
+            }
         }
         _ => {}
     }

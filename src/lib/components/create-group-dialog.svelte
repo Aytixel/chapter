@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { useReducer, useSpacetimeDB, useTable } from "spacetimedb/svelte";
-    import Avatar from "../avatar.svelte";
-    import { Checkbox } from "../ui/checkbox";
+    import { useReducer, useTable } from "spacetimedb/svelte";
+    import Avatar from "./avatar.svelte";
+    import { Checkbox } from "./ui/checkbox";
     import {
         Dialog,
         DialogContent,
@@ -9,18 +9,24 @@
         DialogHeader,
         DialogTitle,
         DialogTrigger
-    } from "../ui/dialog";
-    import { Input } from "../ui/input";
-    import { Label } from "../ui/label";
-    import { ScrollArea } from "../ui/scroll-area";
-    import { Separator } from "../ui/separator";
-    import UserCard from "../user-card.svelte";
+    } from "./ui/dialog";
+    import { Input } from "./ui/input";
+    import { Label } from "./ui/label";
+    import { ScrollArea } from "./ui/scroll-area";
+    import { Separator } from "./ui/separator";
+    import UserCard from "./user-card.svelte";
     import { reducers, tables } from "$lib/module_bindings";
-    import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
-    import { Button } from "../ui/button";
-    import { Plus, Users } from "@lucide/svelte";
+    import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
+    import { Button } from "./ui/button";
+    import { Plus } from "@lucide/svelte";
     import { Identity } from "spacetimedb";
     import { convertAvatar } from "$lib/convert";
+    import { SvelteSet } from "svelte/reactivity";
+    import type { Snippet } from "svelte";
+    import { useSpacetimeDB } from "spacetimedb/svelte";
+
+    const { child: trigger_child }: { child: Snippet<[{ props: Record<string, unknown> }]> } =
+        $props();
 
     const conn = useSpacetimeDB();
     const [users] = useTable(tables.user);
@@ -29,7 +35,7 @@
     let open = $state(false);
     let name = $state("");
     let user_search = $state("");
-    let selected_users = $state(new Set<string>());
+    let selected_users = new SvelteSet<string>();
     let avatar_url = $state("");
     let avatar: Uint8Array | undefined = undefined;
 
@@ -42,15 +48,6 @@
             avatar = undefined;
         }
     });
-
-    async function editGroupAvatar(file?: File) {
-        const blob = await convertAvatar(file);
-
-        if (!blob) return;
-
-        avatar = await blob.bytes();
-        avatar_url = URL.createObjectURL(blob);
-    }
 </script>
 
 <Dialog bind:open>
@@ -60,17 +57,12 @@
                 <Tooltip>
                     <TooltipTrigger>
                         {#snippet child({ props: tooltip_props })}
-                            <Button
-                                {...tooltip_props}
-                                {...dialog_props}
-                                size="icon"
-                                class="relative cursor-pointer"
-                            >
-                                <Users />
-                            </Button>
+                            {@render trigger_child({
+                                props: { ...tooltip_props, ...dialog_props }
+                            })}
                         {/snippet}
                     </TooltipTrigger>
-                    <TooltipContent>Créer un groupe...</TooltipContent>
+                    <TooltipContent side="bottom">Créer un groupe...</TooltipContent>
                 </Tooltip>
             </TooltipProvider>
         {/snippet}
@@ -87,7 +79,14 @@
                 src={avatar_url}
                 alt={name.trim().length ? name : "Groupe"}
                 variant="square"
-                onfile={editGroupAvatar}
+                onfile={async (file?: File) => {
+                    const blob = await convertAvatar(file);
+
+                    if (!blob) return;
+
+                    avatar = await blob.bytes();
+                    avatar_url = URL.createObjectURL(blob);
+                }}
             />
             <Input type="text" placeholder="Nom du groupe.." bind:value={name} />
             <Button
@@ -115,16 +114,16 @@
                             .toLowerCase()
                             .includes(user_search.trim()) && !$conn.identity?.isEqual(user.identity)) as user}
                     {#key user.identity.toString()}
-                        <Label class="flex justify-between rounded-md pr-3 hover:bg-muted">
-                            <UserCard {user} />
+                        <Label
+                            class="flex cursor-pointer justify-between rounded-md pr-3 hover:bg-muted"
+                        >
+                            <UserCard {user} class="cursor-pointer" />
                             <Checkbox
                                 checked={selected_users.has(user.identity.toString())}
-                                onCheckedChange={(checked) => {
+                                onCheckedChange={(checked) =>
                                     checked
                                         ? selected_users.add(user.identity.toString())
-                                        : selected_users.delete(user.identity.toString());
-                                    selected_users = new Set(selected_users);
-                                }}
+                                        : selected_users.delete(user.identity.toString())}
                             />
                         </Label>
                     {/key}
