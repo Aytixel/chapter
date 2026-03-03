@@ -9,7 +9,7 @@
     import { Separator } from "./ui/separator";
     import UserCard from "./user-card.svelte";
     import { reducers, tables } from "$lib/module_bindings";
-    import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
+    import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
     import { convertAvatar } from "$lib/convert";
     import type { Snippet } from "svelte";
     import { Group, type User } from "$lib/module_bindings/types";
@@ -58,20 +58,18 @@
 <Dialog bind:open>
     <DialogTrigger>
         {#snippet child({ props: dialog_props })}
-            <TooltipProvider>
-                <Tooltip>
-                    <TooltipTrigger>
-                        {#snippet child({ props: tooltip_props })}
-                            {#if trigger_child}
-                                {@render trigger_child({
-                                    props: { ...tooltip_props, ...dialog_props }
-                                })}
-                            {/if}
-                        {/snippet}
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom">Voir ou éditer le groupe...</TooltipContent>
-                </Tooltip>
-            </TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger>
+                    {#snippet child({ props: tooltip_props })}
+                        {#if trigger_child}
+                            {@render trigger_child({
+                                props: { ...tooltip_props, ...dialog_props }
+                            })}
+                        {/if}
+                    {/snippet}
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Voir ou éditer le groupe...</TooltipContent>
+            </Tooltip>
         {/snippet}
     </DialogTrigger>
     <DialogContent class="max-h-[min(calc(100dvh-2em),40em)] grid-rows-[repeat(4,auto)_1fr]">

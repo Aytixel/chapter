@@ -39,17 +39,22 @@ import CreateGroupReducer from "./create_group_reducer";
 import DeleteGroupReducer from "./delete_group_reducer";
 import DeleteMessageReducer from "./delete_message_reducer";
 import RemoveGroupUsersReducer from "./remove_group_users_reducer";
+import SendCallFrameReducer from "./send_call_frame_reducer";
 import SendMessageReducer from "./send_message_reducer";
 import SetGroupAvatarReducer from "./set_group_avatar_reducer";
 import SetGroupNameReducer from "./set_group_name_reducer";
 import SetGroupOwnerReducer from "./set_group_owner_reducer";
 import SetUserAvatarReducer from "./set_user_avatar_reducer";
 import SetUserUsernameReducer from "./set_user_username_reducer";
+import StartCallReducer from "./start_call_reducer";
+import StopCallReducer from "./stop_call_reducer";
 import UpdateMessageReducer from "./update_message_reducer";
 
 // Import all procedure arg schemas
 
 // Import all table schema definitions
+import CallFramesRow from "./call_frames_table";
+import CallsRow from "./calls_table";
 import GroupsRow from "./groups_table";
 import MessagesRow from "./messages_table";
 import UserRow from "./user_table";
@@ -67,6 +72,22 @@ const tablesSchema = __schema({
             ]
         },
         UserRow
+    ),
+    call_frames: __table(
+        {
+            name: "call_frames",
+            indexes: [],
+            constraints: []
+        },
+        CallFramesRow
+    ),
+    calls: __table(
+        {
+            name: "calls",
+            indexes: [],
+            constraints: []
+        },
+        CallsRow
     ),
     groups: __table(
         {
@@ -93,12 +114,15 @@ const reducersSchema = __reducers(
     __reducerSchema("delete_group", DeleteGroupReducer),
     __reducerSchema("delete_message", DeleteMessageReducer),
     __reducerSchema("remove_group_users", RemoveGroupUsersReducer),
+    __reducerSchema("send_call_frame", SendCallFrameReducer),
     __reducerSchema("send_message", SendMessageReducer),
     __reducerSchema("set_group_avatar", SetGroupAvatarReducer),
     __reducerSchema("set_group_name", SetGroupNameReducer),
     __reducerSchema("set_group_owner", SetGroupOwnerReducer),
     __reducerSchema("set_user_avatar", SetUserAvatarReducer),
     __reducerSchema("set_user_username", SetUserUsernameReducer),
+    __reducerSchema("start_call", StartCallReducer),
+    __reducerSchema("stop_call", StopCallReducer),
     __reducerSchema("update_message", UpdateMessageReducer)
 );
 

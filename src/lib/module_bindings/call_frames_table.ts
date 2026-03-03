@@ -9,15 +9,15 @@ import {
     type AlgebraicTypeType as __AlgebraicTypeType,
     type Infer as __Infer
 } from "spacetimedb";
-import { ReceiverIdentity } from "./types";
+import { CallFrameSource, CallFrameType } from "./types";
 
 export default __t.row({
-    id: __t.u256(),
     sender: __t.identity(),
-    get receiver() {
-        return ReceiverIdentity;
+    get frameSource() {
+        return CallFrameSource.name("frame_source");
     },
-    message: __t.string(),
-    createdAt: __t.timestamp().name("created_at"),
-    updatedAt: __t.timestamp().name("updated_at")
+    get frameType() {
+        return CallFrameType.name("frame_type");
+    },
+    data: __t.byteArray()
 });

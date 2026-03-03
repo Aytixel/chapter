@@ -5,97 +5,6 @@ use spacetimedb::{
     sats::u256, spacetimedb_lib::Private,
 };
 
-#[spacetimedb::table(accessor = user, public)]
-pub struct User {
-    #[primary_key]
-    identity: Identity,
-    status: UserStatus,
-    username: Option<String>,
-    avatar: Option<Vec<u8>>,
-    groups: Vec<u256>,
-}
-
-#[derive(SpacetimeType)]
-pub enum UserStatus {
-    Online,
-    Offline { at: Timestamp },
-    OnCall,
-}
-
-#[spacetimedb::table(accessor = group)]
-pub struct Group {
-    #[primary_key]
-    #[auto_inc]
-    id: u256,
-    owner: Identity,
-    name: Option<String>,
-    avatar: Option<Vec<u8>>,
-    users: Vec<Identity>,
-}
-
-#[derive(SpacetimeType)]
-pub enum ReceiverIdentity {
-    User { identity: Identity },
-    Group { id: u256 },
-}
-
-impl Private for ReceiverIdentity {}
-
-impl FilterableValue for ReceiverIdentity {
-    type Column = ReceiverIdentity;
-}
-
-#[spacetimedb::view(accessor = groups, public)]
-fn groups(ctx: &ViewContext) -> Vec<Group> {
-    let Some(user) = ctx.db.user().identity().find(ctx.sender()) else {
-        return Vec::new();
-    };
-
-    user.groups
-        .iter()
-        .flat_map(|group| ctx.db.group().id().find(group))
-        .collect()
-}
-
-#[spacetimedb::table(accessor = message)]
-pub struct Message {
-    #[primary_key]
-    #[auto_inc]
-    id: u256,
-    #[index(btree)]
-    receiver: ReceiverIdentity,
-    #[index(btree)]
-    sender: Identity,
-    message: String,
-    created_at: Timestamp,
-    updated_at: Timestamp,
-}
-
-#[spacetimedb::view(accessor = messages, public)]
-fn messages(ctx: &ViewContext) -> Vec<Message> {
-    let identity = ctx.sender();
-    let messages_from_group = groups(ctx)
-        .into_iter()
-        .flat_map(|group| {
-            ctx.db
-                .message()
-                .receiver()
-                .filter(ReceiverIdentity::Group { id: group.id })
-        })
-        .filter(|message| message.sender != identity);
-    let messages_from_user = ctx
-        .db
-        .message()
-        .receiver()
-        .filter(ReceiverIdentity::User { identity });
-    let message_from_sender = ctx.db.message().sender().filter(&identity);
-
-    messages_from_group
-        .chain(messages_from_user)
-        .chain(message_from_sender)
-        .collect()
-}
-
 #[spacetimedb::reducer(init)]
 pub fn init(_ctx: &ReducerContext) {
     // Called when the module is initially published
@@ -126,12 +35,30 @@ pub fn identity_disconnected(ctx: &ReducerContext) {
             status: UserStatus::Offline { at: ctx.timestamp },
             ..user
         });
+        ctx.db.call().sender().delete(ctx.sender());
     } else {
         log::warn!(
             "Disconnect event for unknown user with identity {:?}",
             ctx.sender()
         );
     }
+}
+
+#[spacetimedb::table(accessor = user, public)]
+pub struct User {
+    #[primary_key]
+    identity: Identity,
+    status: UserStatus,
+    username: Option<String>,
+    avatar: Option<Vec<u8>>,
+    groups: Vec<u256>,
+}
+
+#[derive(SpacetimeType)]
+pub enum UserStatus {
+    Online,
+    Offline { at: Timestamp },
+    OnCall,
 }
 
 #[spacetimedb::reducer]
@@ -169,6 +96,41 @@ pub fn set_user_avatar(ctx: &ReducerContext, avatar: Option<Vec<u8>>) -> Result<
 
 fn get_user(ctx: &ReducerContext, user_identity: Identity) -> Option<User> {
     ctx.db.user().identity().find(user_identity)
+}
+
+#[spacetimedb::table(accessor = group)]
+pub struct Group {
+    #[primary_key]
+    #[auto_inc]
+    id: u256,
+    owner: Identity,
+    name: Option<String>,
+    avatar: Option<Vec<u8>>,
+    users: Vec<Identity>,
+}
+
+#[derive(SpacetimeType, PartialEq, Eq)]
+pub enum ReceiverIdentity {
+    User { identity: Identity },
+    Group { id: u256 },
+}
+
+impl Private for ReceiverIdentity {}
+
+impl FilterableValue for ReceiverIdentity {
+    type Column = ReceiverIdentity;
+}
+
+#[spacetimedb::view(accessor = groups, public)]
+fn groups(ctx: &ViewContext) -> Vec<Group> {
+    let Some(user) = ctx.db.user().identity().find(ctx.sender()) else {
+        return Vec::new();
+    };
+
+    user.groups
+        .iter()
+        .flat_map(|group| ctx.db.group().id().find(group))
+        .collect()
 }
 
 #[spacetimedb::reducer]
@@ -421,6 +383,45 @@ fn check_in_group(ctx: &ReducerContext, group: &Group) -> Result<(), String> {
     Ok(())
 }
 
+#[spacetimedb::table(accessor = message)]
+pub struct Message {
+    #[primary_key]
+    #[auto_inc]
+    id: u256,
+    #[index(btree)]
+    sender: Identity,
+    #[index(btree)]
+    receiver: ReceiverIdentity,
+    message: String,
+    created_at: Timestamp,
+    updated_at: Timestamp,
+}
+
+#[spacetimedb::view(accessor = messages, public)]
+fn messages(ctx: &ViewContext) -> Vec<Message> {
+    let identity = ctx.sender();
+    let messages_from_group = groups(ctx)
+        .into_iter()
+        .flat_map(|group| {
+            ctx.db
+                .message()
+                .receiver()
+                .filter(ReceiverIdentity::Group { id: group.id })
+        })
+        .filter(|message| message.sender != identity);
+    let messages_from_user = ctx
+        .db
+        .message()
+        .receiver()
+        .filter(ReceiverIdentity::User { identity });
+    let messages_from_sender = ctx.db.message().sender().filter(&identity);
+
+    messages_from_group
+        .chain(messages_from_user)
+        .chain(messages_from_sender)
+        .collect()
+}
+
 #[spacetimedb::reducer]
 pub fn send_message(
     ctx: &ReducerContext,
@@ -506,4 +507,146 @@ fn check_message(message: &str) -> Result<(), String> {
     }
 
     Ok(())
+}
+
+#[spacetimedb::table(accessor = call)]
+pub struct Call {
+    #[primary_key]
+    sender: Identity,
+    #[index(btree)]
+    receiver: ReceiverIdentity,
+    start_at: Timestamp,
+}
+
+#[spacetimedb::view(accessor = calls, public)]
+fn calls(ctx: &ViewContext) -> Vec<Call> {
+    let identity = ctx.sender();
+    let calls_from_group = groups(ctx)
+        .into_iter()
+        .flat_map(|group| {
+            ctx.db
+                .call()
+                .receiver()
+                .filter(ReceiverIdentity::Group { id: group.id })
+        })
+        .filter(|call| call.sender != identity);
+    let calls_from_user = ctx
+        .db
+        .call()
+        .receiver()
+        .filter(ReceiverIdentity::User { identity });
+    let call_from_sender = ctx.db.call().sender().find(&identity);
+
+    calls_from_group
+        .chain(calls_from_user)
+        .chain(call_from_sender)
+        .collect()
+}
+
+#[spacetimedb::reducer]
+fn start_call(ctx: &ReducerContext, receiver: ReceiverIdentity) -> Result<(), String> {
+    let Some(user) = get_user(ctx, ctx.sender()) else {
+        return Err("Cannot create group for unknown user".to_string());
+    };
+
+    ctx.db.call().sender().delete(ctx.sender());
+    ctx.db.call().insert(Call {
+        sender: ctx.sender(),
+        receiver,
+        start_at: ctx.timestamp,
+    });
+    ctx.db.user().identity().update(User {
+        status: UserStatus::OnCall,
+        ..user
+    });
+
+    Ok(())
+}
+
+#[spacetimedb::reducer]
+fn stop_call(ctx: &ReducerContext) -> Result<(), String> {
+    let Some(user) = get_user(ctx, ctx.sender()) else {
+        return Err("Cannot create group for unknown user".to_string());
+    };
+
+    ctx.db.call().sender().delete(ctx.sender());
+    ctx.db.user().identity().update(User {
+        status: UserStatus::Online,
+        ..user
+    });
+
+    Ok(())
+}
+
+#[spacetimedb::table(accessor = call_frame, event)]
+pub struct CallFrame {
+    #[primary_key]
+    sender: Identity,
+    frame_source: CallFrameSource,
+    frame_type: CallFrameType,
+    data: Vec<u8>,
+}
+
+#[derive(SpacetimeType)]
+pub enum CallFrameSource {
+    Camera,
+    Screen,
+}
+
+#[derive(SpacetimeType)]
+pub enum CallFrameType {
+    Video,
+    Audio,
+}
+
+#[spacetimedb::view(accessor = call_frames, public)]
+fn call_frames(ctx: &ViewContext) -> Vec<CallFrame> {
+    let Some(call) = ctx.db.call().sender().find(ctx.sender()) else {
+        return Vec::new();
+    };
+
+    match call.receiver {
+        ReceiverIdentity::User { identity } => {
+            let call_frame_from_me = ctx.db.call_frame().sender().find(ctx.sender());
+            let call_frame_from_other = ctx.db.call().sender().find(identity).and_then(|call| {
+                if (call.receiver
+                    == ReceiverIdentity::User {
+                        identity: ctx.sender(),
+                    })
+                {
+                    ctx.db.call_frame().sender().find(identity)
+                } else {
+                    None
+                }
+            });
+
+            call_frame_from_me
+                .into_iter()
+                .chain(call_frame_from_other)
+                .collect()
+        }
+        receiver @ ReceiverIdentity::Group { .. } => ctx
+            .db
+            .call()
+            .receiver()
+            .filter(receiver)
+            .into_iter()
+            .flat_map(|call| ctx.db.call_frame().sender().find(call.sender))
+            .collect(),
+    }
+}
+
+#[spacetimedb::reducer]
+fn send_call_frame(
+    ctx: &ReducerContext,
+    frame_source: CallFrameSource,
+    frame_type: CallFrameType,
+    data: Vec<u8>,
+) {
+    ctx.db.call_frame().insert(CallFrame {
+        sender: ctx.sender(),
+        frame_source,
+        frame_type,
+        data,
+    });
 }

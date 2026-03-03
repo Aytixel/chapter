@@ -12,6 +12,9 @@
     import MessageComponent from "$lib/components/message.svelte";
     import GroupCard from "$lib/components/group-card.svelte";
     import { getGroupName } from "$lib/group";
+    import { Button } from "$lib/components/ui/button";
+    import { Airplay, Phone, PhoneOff, Video } from "@lucide/svelte";
+    import Time from "$lib/components/time.svelte";
 
     const { params }: PageProps = $props();
 
@@ -19,7 +22,10 @@
     const [users] = useTable(tables.user);
     const [groups] = useTable(tables.groups);
     const [messages] = useTable(tables.messages);
+    const [calls] = useTable(tables.calls);
     const sendMessage = useReducer(reducers.sendMessage);
+    const startCall = useReducer(reducers.startCall);
+    const stopCall = useReducer(reducers.stopCall);
 
     const users_map = $derived(getUsersMap($users as User[]));
 
@@ -49,7 +55,7 @@
     });
 
     $effect(() => {
-        if (user == undefined && group == undefined) location.href = "/";
+        if (!receiver) location.href = "/";
     });
 
     function shouldDisplayMessage(message: Message): boolean {
@@ -75,6 +81,20 @@
         $messages.filter(shouldDisplayMessage).sort((a: Message, b: Message) => Number(a.id - b.id))
     );
     let new_message = $state("");
+
+    const current_call = $derived($calls.find((call) => $conn.identity?.isEqual(call.sender)));
+    const is_current_call = $derived(
+        current_call !== undefined &&
+            receiver !== undefined &&
+            (current_call.receiver.tag == "User" && receiver.tag == "User"
+                ? current_call.receiver.value.isEqual(receiver.value)
+                : current_call.receiver.tag == "Group" && receiver.tag == "Group"
+                  ? current_call.receiver.value == receiver.value
+                  : false)
+    );
+
+    let sharing_camera = $state(false);
+    let sharing_screen = $state(false);
 </script>
 
 <svelte:head>
@@ -84,13 +104,81 @@
 </svelte:head>
 
 <div class="flex h-full min-h-0 flex-col gap-3">
-    <div class="flex">
+    <div class="flex justify-between gap-3">
         {#if user}
             <UserCard {user} />
         {/if}
         {#if group}
             <GroupCard {group} />
         {/if}
+        <div class="flex items-center gap-3">
+            {#if is_current_call && current_call}
+                <Time timestamp={current_call.startAt} />
+            {/if}
+            <Button
+                variant={is_current_call && sharing_screen ? "default" : "outline"}
+                size="icon"
+                class="cursor-pointer"
+                onclick={async () => {
+                    const is_current_call_local = is_current_call;
+
+                    if (is_current_call_local) sharing_screen = !sharing_screen;
+                    else sharing_camera = false;
+
+                    if (receiver) await startCall({ receiver });
+
+                    if (!is_current_call_local) sharing_screen = true;
+                }}
+            >
+                <Airplay />
+            </Button>
+            <Button
+                variant={is_current_call && sharing_camera ? "default" : "outline"}
+                size="icon"
+                class="cursor-pointer"
+                onclick={async () => {
+                    const is_current_call_local = is_current_call;
+
+                    if (is_current_call_local) sharing_camera = !sharing_camera;
+                    else sharing_screen = false;
+
+                    if (receiver) await startCall({ receiver });
+
+                    if (!is_current_call_local) sharing_camera = true;
+                }}
+            >
+                <Video />
+            </Button>
+            {#if is_current_call}
+                <Button
+                    variant="destructive"
+                    size="icon"
+                    class="cursor-pointer"
+                    onclick={() => {
+                        sharing_camera = false;
+                        sharing_screen = false;
+
+                        stopCall();
+                    }}
+                >
+                    <PhoneOff />
+                </Button>
+            {:else}
+                <Button
+                    variant="outline"
+                    size="icon"
+                    class="cursor-pointer"
+                    onclick={() => {
+                        sharing_camera = false;
+                        sharing_screen = false;
+
+                        if (receiver) startCall({ receiver });
+                    }}
+                >
+                    <Phone />
+                </Button>
+            {/if}
+        </div>
     </div>
     <Separator />
     <ScrollArea class="h-full min-h-0">

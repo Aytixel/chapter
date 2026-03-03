@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { Snippet } from "svelte";
     import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
-    import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
+    import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
     import type { User } from "$lib/module_bindings/types";
     import { useReducer, useSpacetimeDB } from "spacetimedb/svelte";
     import { getUserStatus, getUserUsername } from "$lib/user";
@@ -39,22 +39,20 @@
 <Dialog>
     <DialogTrigger>
         {#snippet child({ props: dialog_props })}
-            <TooltipProvider>
-                <Tooltip>
-                    <TooltipTrigger>
-                        {#snippet child({ props: tooltip_props })}
-                            {#if trigger_child}
-                                {@render trigger_child({
-                                    props: { ...tooltip_props, ...dialog_props }
-                                })}
-                            {/if}
-                        {/snippet}
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom"
-                        >Voir {me ? "ou éditer" : ""} le profil...</TooltipContent
-                    >
-                </Tooltip>
-            </TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger>
+                    {#snippet child({ props: tooltip_props })}
+                        {#if trigger_child}
+                            {@render trigger_child({
+                                props: { ...tooltip_props, ...dialog_props }
+                            })}
+                        {/if}
+                    {/snippet}
+                </TooltipTrigger>
+                <TooltipContent side="bottom"
+                    >Voir {me ? "ou éditer" : ""} le profil...</TooltipContent
+                >
+            </Tooltip>
         {/snippet}
     </DialogTrigger>
     <DialogContent class="max-h-[min(calc(100dvh-2em),40em)] grid-rows-[repeat(4,auto)_1fr]">

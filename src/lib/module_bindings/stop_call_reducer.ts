@@ -9,15 +9,5 @@ import {
     type AlgebraicTypeType as __AlgebraicTypeType,
     type Infer as __Infer
 } from "spacetimedb";
-import { ReceiverIdentity } from "./types";
 
-export default __t.row({
-    id: __t.u256(),
-    sender: __t.identity(),
-    get receiver() {
-        return ReceiverIdentity;
-    },
-    message: __t.string(),
-    createdAt: __t.timestamp().name("created_at"),
-    updatedAt: __t.timestamp().name("updated_at")
-});
+export default {};

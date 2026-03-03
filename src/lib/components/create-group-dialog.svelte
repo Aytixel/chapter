@@ -16,7 +16,7 @@
     import { Separator } from "./ui/separator";
     import UserCard from "./user-card.svelte";
     import { reducers, tables } from "$lib/module_bindings";
-    import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
+    import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
     import { Button } from "./ui/button";
     import { Plus } from "@lucide/svelte";
     import { Identity } from "spacetimedb";
@@ -53,18 +53,16 @@
 <Dialog bind:open>
     <DialogTrigger>
         {#snippet child({ props: dialog_props })}
-            <TooltipProvider>
-                <Tooltip>
-                    <TooltipTrigger>
-                        {#snippet child({ props: tooltip_props })}
-                            {@render trigger_child({
-                                props: { ...tooltip_props, ...dialog_props }
-                            })}
-                        {/snippet}
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom">Créer un groupe...</TooltipContent>
-                </Tooltip>
-            </TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger>
+                    {#snippet child({ props: tooltip_props })}
+                        {@render trigger_child({
+                            props: { ...tooltip_props, ...dialog_props }
+                        })}
+                    {/snippet}
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Créer un groupe...</TooltipContent>
+            </Tooltip>
         {/snippet}
     </DialogTrigger>
     <DialogContent class="max-h-[min(calc(100dvh-2em),40em)] grid-rows-[repeat(4,auto)_1fr]">

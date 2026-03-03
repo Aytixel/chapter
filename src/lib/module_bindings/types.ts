@@ -10,6 +10,41 @@ import {
     type Infer as __Infer
 } from "spacetimedb";
 
+export const Call = __t.object("Call", {
+    sender: __t.identity(),
+    get receiver() {
+        return ReceiverIdentity;
+    },
+    startAt: __t.timestamp()
+});
+export type Call = __Infer<typeof Call>;
+
+export const CallFrame = __t.object("CallFrame", {
+    sender: __t.identity(),
+    get frameSource() {
+        return CallFrameSource;
+    },
+    get frameType() {
+        return CallFrameType;
+    },
+    data: __t.byteArray()
+});
+export type CallFrame = __Infer<typeof CallFrame>;
+
+// The tagged union or sum type for the algebraic type `CallFrameSource`.
+export const CallFrameSource = __t.enum("CallFrameSource", {
+    Camera: __t.unit(),
+    Screen: __t.unit()
+});
+export type CallFrameSource = __Infer<typeof CallFrameSource>;
+
+// The tagged union or sum type for the algebraic type `CallFrameType`.
+export const CallFrameType = __t.enum("CallFrameType", {
+    Video: __t.unit(),
+    Audio: __t.unit()
+});
+export type CallFrameType = __Infer<typeof CallFrameType>;
+
 export const Group = __t.object("Group", {
     id: __t.u256(),
     owner: __t.identity(),
@@ -21,10 +56,10 @@ export type Group = __Infer<typeof Group>;
 
 export const Message = __t.object("Message", {
     id: __t.u256(),
+    sender: __t.identity(),
     get receiver() {
         return ReceiverIdentity;
     },
-    sender: __t.identity(),
     message: __t.string(),
     createdAt: __t.timestamp(),
     updatedAt: __t.timestamp()

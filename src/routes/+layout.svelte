@@ -6,6 +6,7 @@
     import { DbConnection, type ErrorContext } from "$lib/module_bindings";
     import { Separator } from "$lib/components/ui/separator";
     import Sidebar from "$lib/components/sidebar.svelte";
+    import { TooltipProvider } from "$lib/components/ui/tooltip";
 
     const HOST = import.meta.env.VITE_SPACETIMEDB_HOST ?? "ws://localhost:3000";
     const DB_NAME = import.meta.env.VITE_SPACETIMEDB_DB_NAME ?? "chapter";
@@ -42,9 +43,11 @@
 <svelte:head><link rel="icon" href={favicon} /></svelte:head>
 
 {#if $conn.isActive}
-    <div class="grid h-dvh grid-cols-[auto_auto_1fr] gap-3 p-3">
-        <Sidebar />
-        <Separator orientation="vertical" />
-        {@render children()}
-    </div>
+    <TooltipProvider>
+        <div class="grid h-dvh grid-cols-[auto_auto_1fr] gap-3 p-3">
+            <Sidebar />
+            <Separator orientation="vertical" />
+            {@render children()}
+        </div>
+    </TooltipProvider>
 {/if}

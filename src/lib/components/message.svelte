@@ -16,7 +16,7 @@
     import { useReducer, useSpacetimeDB, useTable } from "spacetimedb/svelte";
     import type { Message } from "$lib/module_bindings/types";
     import { reducers, tables } from "$lib/module_bindings";
-    import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
+    import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
     import {
         ContextMenu,
         ContextMenuTrigger,
@@ -54,16 +54,14 @@
                             {#if message.createdAt.toMillis() == message.updatedAt.toMillis()}
                                 {message.createdAt.toDate().toLocaleString()}
                             {:else}
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger>
-                                            {message.createdAt.toDate().toLocaleString()} (modifié)
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            {message.updatedAt.toDate().toLocaleString()}
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger>
+                                        {message.createdAt.toDate().toLocaleString()} (modifié)
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        {message.updatedAt.toDate().toLocaleString()}
+                                    </TooltipContent>
+                                </Tooltip>
                             {/if}
                         </ItemDescription>
                     </ItemHeader>
