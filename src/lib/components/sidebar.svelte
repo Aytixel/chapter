@@ -11,11 +11,12 @@
     import { getGroupName } from "$lib/group";
     import { Button } from "./ui/button";
     import type { User } from "$lib/module_bindings/types";
-    import { Moon, Sun, Users } from "@lucide/svelte";
+    import { Moon, Phone, Sun, Users } from "@lucide/svelte";
 
     const conn = useSpacetimeDB();
     const [users] = useTable(tables.user);
     const [groups] = useTable(tables.groups);
+    const [calls] = useTable(tables.calls);
 
     const me = $derived($users.find((user) => $conn.identity?.equals(user.identity)));
     const users_map = $derived(getUsersMap($users as User[]));
@@ -57,21 +58,39 @@
         <div class="grid w-72 gap-1">
             {#if me}
                 <a href="/conversation/user:{me.identity.toString()}" class="cursor-pointer">
-                    <UserCard user={me} class="cursor-pointer hover:bg-muted" />
+                    <UserCard user={me} class="cursor-pointer hover:bg-muted">
+                        {#snippet child()}
+                            {#if $calls.find((call) => call.receiver.tag == "User" && call.receiver.value.isEqual(me.identity) && call.sender.isEqual(me.identity))}
+                                <Phone class="mr-3 size-4" />
+                            {/if}
+                        {/snippet}
+                    </UserCard>
                 </a>
             {/if}
             {#if filtered_groups.length}
                 <Separator class="my-2" />
                 {#each filtered_groups as group}
                     <a href="/conversation/group:{group.id}">
-                        <GroupCard {group} class="cursor-pointer hover:bg-muted" />
+                        <GroupCard {group} class="cursor-pointer hover:bg-muted">
+                            {#snippet child()}
+                                {#if $calls.find((call) => call.receiver.tag == "Group" && call.receiver.value == group.id)}
+                                    <Phone class="mr-3 size-4" />
+                                {/if}
+                            {/snippet}
+                        </GroupCard>
                     </a>
                 {/each}
             {/if}
             <Separator class="my-2" />
             {#each filtered_users as user}
                 <a href="/conversation/user:{user.identity.toString()}" class="cursor-pointer">
-                    <UserCard {user} class="cursor-pointer hover:bg-muted" />
+                    <UserCard {user} class="cursor-pointer hover:bg-muted">
+                        {#snippet child()}
+                            {#if $calls.find((call) => call.sender.isEqual(user.identity))}
+                                <Phone class="mr-3 size-4" />
+                            {/if}
+                        {/snippet}
+                    </UserCard>
                 </a>
             {/each}
         </div>

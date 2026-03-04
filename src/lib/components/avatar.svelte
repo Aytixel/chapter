@@ -22,7 +22,7 @@
 
 {#snippet avatar()}
     <Avatar {...props} class={["border", variant == "square" && "rounded-md", classname]}>
-        <AvatarImage {src} {alt} />
+        <AvatarImage {src} {alt} class="object-cover" />
         <AvatarFallback class={[variant == "square" && "rounded-md"]}>
             {alt && alt.toString()[0].toUpperCase()}
         </AvatarFallback>

@@ -7,12 +7,20 @@
     import { getGroupName } from "$lib/group";
     import { getUsersMap } from "$lib/user";
     import EditGroupDialog from "./edit-group-dialog.svelte";
+    import type { Snippet } from "svelte";
+    import type { ClassValue } from "svelte/elements";
 
     const {
         group,
         variant,
-        class: classname
-    }: { group: Group; variant?: "default" | "icon"; class?: string } = $props();
+        class: classname,
+        child
+    }: {
+        group: Group;
+        variant?: "default" | "icon";
+        class?: ClassValue | null;
+        child?: Snippet<[]>;
+    } = $props();
 
     const [users] = useTable(tables.user);
 
@@ -50,12 +58,15 @@
         </EditGroupDialog>
     </ItemMedia>
     {#if variant != "icon"}
-        <ItemContent class="w-full min-w-0 ">
+        <ItemContent class="grid w-full min-w-0 grid-cols-[1fr_auto] items-center gap-3">
             <ItemTitle
                 class="block w-full cursor-[inherit] overflow-hidden text-nowrap text-ellipsis"
             >
                 {name}
             </ItemTitle>
+            {#if child}
+                {@render child()}
+            {/if}
         </ItemContent>
     {/if}
 </Item>

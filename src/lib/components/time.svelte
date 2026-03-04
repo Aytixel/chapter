@@ -1,6 +1,7 @@
 <script lang="ts">
     import { Time } from "@internationalized/date";
     import { Timestamp } from "spacetimedb";
+    import { onMount } from "svelte";
 
     const { timestamp }: { timestamp: Timestamp } = $props();
 
@@ -10,9 +11,12 @@
         `${time.hour.toString().padStart(2, "0")}:${time.minute.toString().padStart(2, "0")}:${time.second.toString().padStart(2, "0")}`
     );
 
-    setInterval(() => {
-        time = new Time().add({ milliseconds: Timestamp.now().since(timestamp).millis });
-    }, 1000);
+    const interval = setInterval(
+        () => (time = new Time().add({ milliseconds: Timestamp.now().since(timestamp).millis })),
+        1000
+    );
+
+    onMount(() => () => clearInterval(interval));
 </script>
 
 <time datetime={time_string}>{time_string}</time>
