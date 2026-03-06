@@ -24,7 +24,15 @@
     <Avatar {...props} class={["border", variant == "square" && "rounded-md", classname]}>
         <AvatarImage {src} {alt} class="object-cover" />
         <AvatarFallback class={[variant == "square" && "rounded-md"]}>
-            {alt && alt.toString()[0].toUpperCase()}
+            {alt &&
+                alt
+                    .replace("(Vous)", "")
+                    .replaceAll("  ", " ")
+                    .trim()
+                    .split(" ")
+                    .slice(0, 2)
+                    .map((split) => split[0]?.toUpperCase())
+                    .join("")}
         </AvatarFallback>
     </Avatar>
 {/snippet}
