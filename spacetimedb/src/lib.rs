@@ -584,6 +584,9 @@ pub struct CallFrame {
     sender: Identity,
     frame_source: CallFrameSource,
     frame_type: CallFrameType,
+    codec: String,
+    chunk_type: CallFrameChunkType,
+    timestamp: u32,
     data: Vec<u8>,
 }
 
@@ -596,7 +599,19 @@ pub enum CallFrameSource {
 #[derive(SpacetimeType)]
 pub enum CallFrameType {
     Video,
-    Audio,
+    Audio { info: AudioInfo },
+}
+
+#[derive(SpacetimeType)]
+pub struct AudioInfo {
+    sample_rate: u32,
+    number_of_channels: u8,
+}
+
+#[derive(SpacetimeType)]
+pub enum CallFrameChunkType {
+    Key,
+    Delta,
 }
 
 #[spacetimedb::view(accessor = call_frames, public)]
@@ -641,12 +656,18 @@ fn send_call_frame(
     ctx: &ReducerContext,
     frame_source: CallFrameSource,
     frame_type: CallFrameType,
+    codec: String,
+    chunk_type: CallFrameChunkType,
+    timestamp: u32,
     data: Vec<u8>,
 ) {
     ctx.db.call_frame().insert(CallFrame {
         sender: ctx.sender(),
         frame_source,
         frame_type,
+        codec,
+        chunk_type,
+        timestamp,
         data,
     });
 }

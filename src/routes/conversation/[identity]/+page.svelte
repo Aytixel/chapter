@@ -8,15 +8,22 @@
     import UserCard from "$lib/components/user-card.svelte";
     import { ScrollArea } from "$lib/components/ui/scroll-area";
     import { InputGroup, InputGroupTextarea } from "$lib/components/ui/input-group";
-    import { Call, Message, User, type ReceiverIdentity } from "$lib/module_bindings/types";
+    import {
+        Call,
+        CallFrameSource,
+        Message,
+        User,
+        type ReceiverIdentity
+    } from "$lib/module_bindings/types";
     import MessageComponent from "$lib/components/message.svelte";
     import GroupCard from "$lib/components/group-card.svelte";
     import { getGroupName } from "$lib/group";
     import { Button } from "$lib/components/ui/button";
-    import { Airplay, Phone, PhoneOff, Video } from "@lucide/svelte";
+    import { Airplay, Mic, Phone, PhoneOff, Video } from "@lucide/svelte";
     import Time from "$lib/components/time.svelte";
     import { compareReceivers } from "$lib";
     import CallCard from "$lib/components/call-card.svelte";
+    import { Encoder } from "$lib/call/encoder";
 
     const { params }: PageProps = $props();
 
@@ -100,8 +107,40 @@
             compareReceivers(my_call.receiver, receiver)
     );
 
-    let sharing_camera = $state(false);
-    let sharing_screen = $state(false);
+    let sharing_camera = $state<Encoder>();
+    let sharing_screen = $state<Encoder>();
+    let sharing_microphone = $state<Encoder>();
+
+    async function start_capture(
+        encoder: Encoder | undefined,
+        source: CallFrameSource,
+        stream_callback: () => Promise<MediaStream>
+    ): Promise<Encoder | undefined> {
+        return encoder || new Encoder($conn.getConnection(), await stream_callback(), source);
+    }
+
+    function stop_capture(encoder: Encoder | undefined): undefined {
+        encoder?.stop();
+    }
+
+    async function toggle(
+        encoder: Encoder | undefined,
+        source: CallFrameSource,
+        stream_callback: () => Promise<MediaStream>
+    ): Promise<Encoder | undefined> {
+        const is_my_call_local = is_my_call;
+
+        if (is_my_call_local) {
+            if (encoder) encoder = stop_capture(encoder);
+            else encoder = await start_capture(encoder, source, stream_callback);
+        } else if (receiver) {
+            await startCall({ receiver });
+
+            encoder = await start_capture(encoder, source, stream_callback);
+        }
+
+        return encoder;
+    }
 </script>
 
 <svelte:head>
@@ -126,16 +165,19 @@
                 variant={is_my_call && sharing_screen ? "default" : "outline"}
                 size="icon"
                 class="cursor-pointer"
-                onclick={async () => {
-                    const is_my_call_local = is_my_call;
-
-                    if (is_my_call_local) sharing_screen = !sharing_screen;
-                    else sharing_camera = false;
-
-                    if (receiver) await startCall({ receiver });
-
-                    if (!is_my_call_local) sharing_screen = true;
-                }}
+                onclick={async () =>
+                    (sharing_screen = await toggle(
+                        sharing_screen,
+                        CallFrameSource.Screen,
+                        async () =>
+                            navigator.mediaDevices.getDisplayMedia({
+                                video: { cursor: "always" },
+                                monitorTypeSurfaces: "include",
+                                preferCurrentTab: false,
+                                selfBrowserSurface: "exclude",
+                                surfaceSwitching: "include"
+                            })
+                    ))}
             >
                 <Airplay />
             </Button>
@@ -143,18 +185,27 @@
                 variant={is_my_call && sharing_camera ? "default" : "outline"}
                 size="icon"
                 class="cursor-pointer"
-                onclick={async () => {
-                    const is_my_call_local = is_my_call;
-
-                    if (is_my_call_local) sharing_camera = !sharing_camera;
-                    else sharing_screen = false;
-
-                    if (receiver) await startCall({ receiver });
-
-                    if (!is_my_call_local) sharing_camera = true;
-                }}
+                onclick={async () =>
+                    (sharing_camera = await toggle(
+                        sharing_camera,
+                        CallFrameSource.Camera,
+                        async () => navigator.mediaDevices.getUserMedia({ video: true })
+                    ))}
             >
                 <Video />
+            </Button>
+            <Button
+                variant={is_my_call && sharing_microphone ? "default" : "outline"}
+                size="icon"
+                class="cursor-pointer"
+                onclick={async () =>
+                    (sharing_microphone = await toggle(
+                        sharing_microphone,
+                        CallFrameSource.Camera,
+                        async () => navigator.mediaDevices.getUserMedia({ audio: true })
+                    ))}
+            >
+                <Mic />
             </Button>
             {#if is_my_call}
                 <Button
@@ -162,9 +213,9 @@
                     size="icon"
                     class="cursor-pointer"
                     onclick={() => {
-                        sharing_camera = false;
-                        sharing_screen = false;
-
+                        sharing_camera = stop_capture(sharing_camera);
+                        sharing_screen = stop_capture(sharing_screen);
+                        sharing_microphone = stop_capture(sharing_microphone);
                         stopCall();
                     }}
                 >
@@ -176,10 +227,9 @@
                     size="icon"
                     class="cursor-pointer"
                     onclick={() => {
-                        sharing_camera = false;
-                        sharing_screen = false;
-
-                        if (receiver) startCall({ receiver });
+                        sharing_camera = stop_capture(sharing_camera);
+                        sharing_screen = stop_capture(sharing_screen);
+                        if (!is_my_call && receiver) startCall({ receiver });
                     }}
                 >
                     <Phone />

@@ -24,6 +24,6 @@
     <div
         class="flex aspect-video h-48 min-h-0 min-w-0 items-center justify-center rounded-md border bg-muted/15"
     >
-        <Avatar src={avatar_url} alt={username} class="size-32" />
+        <Avatar src={avatar_url} alt={username} class="size-32 text-5xl" />
     </div>
 {/if}

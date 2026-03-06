@@ -61,7 +61,7 @@
                     <UserCard user={me} class="cursor-pointer hover:bg-muted">
                         {#snippet child()}
                             {#if $calls.find((call) => call.receiver.tag == "User" && call.receiver.value.isEqual(me.identity) && call.sender.isEqual(me.identity))}
-                                <Phone class="mr-3 size-4" />
+                                <Phone class="mr-3 size-4 stroke-green-500" />
                             {/if}
                         {/snippet}
                     </UserCard>
@@ -73,8 +73,23 @@
                     <a href="/conversation/group:{group.id}">
                         <GroupCard {group} class="cursor-pointer hover:bg-muted">
                             {#snippet child()}
-                                {#if $calls.find((call) => call.receiver.tag == "Group" && call.receiver.value == group.id)}
-                                    <Phone class="mr-3 size-4" />
+                                {@const group_calls = $calls.filter(
+                                    (call) =>
+                                        call.receiver.tag == "Group" &&
+                                        call.receiver.value == group.id
+                                )}
+                                {#if group_calls.length}
+                                    <Phone
+                                        class={[
+                                            "mr-3 size-4",
+                                            me &&
+                                            group_calls.some((call) =>
+                                                call.sender.isEqual(me.identity)
+                                            )
+                                                ? "stroke-green-500"
+                                                : "stroke-yellow-500"
+                                        ]}
+                                    />
                                 {/if}
                             {/snippet}
                         </GroupCard>
@@ -86,8 +101,25 @@
                 <a href="/conversation/user:{user.identity.toString()}" class="cursor-pointer">
                     <UserCard {user} class="cursor-pointer hover:bg-muted">
                         {#snippet child()}
-                            {#if $calls.find((call) => call.sender.isEqual(user.identity))}
-                                <Phone class="mr-3 size-4" />
+                            {@const user_calls = $calls.filter(
+                                (call) =>
+                                    me &&
+                                    call.receiver.tag == "User" &&
+                                    ((call.receiver.value.isEqual(me.identity) &&
+                                        call.sender.isEqual(user.identity)) ||
+                                        (call.receiver.value.isEqual(user.identity) &&
+                                            call.sender.isEqual(me.identity)))
+                            )}
+                            {#if user_calls.length}
+                                <Phone
+                                    class={[
+                                        "mr-3 size-4",
+                                        me &&
+                                        user_calls.some((call) => call.sender.isEqual(me.identity))
+                                            ? "stroke-green-500"
+                                            : "stroke-yellow-500"
+                                    ]}
+                                />
                             {/if}
                         {/snippet}
                     </UserCard>

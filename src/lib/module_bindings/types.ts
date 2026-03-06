@@ -10,6 +10,12 @@ import {
     type Infer as __Infer
 } from "spacetimedb";
 
+export const AudioInfo = __t.object("AudioInfo", {
+    sampleRate: __t.u32(),
+    numberOfChannels: __t.u8()
+});
+export type AudioInfo = __Infer<typeof AudioInfo>;
+
 export const Call = __t.object("Call", {
     sender: __t.identity(),
     get receiver() {
@@ -27,9 +33,21 @@ export const CallFrame = __t.object("CallFrame", {
     get frameType() {
         return CallFrameType;
     },
+    codec: __t.string(),
+    get chunkType() {
+        return CallFrameChunkType;
+    },
+    timestamp: __t.u32(),
     data: __t.byteArray()
 });
 export type CallFrame = __Infer<typeof CallFrame>;
+
+// The tagged union or sum type for the algebraic type `CallFrameChunkType`.
+export const CallFrameChunkType = __t.enum("CallFrameChunkType", {
+    Key: __t.unit(),
+    Delta: __t.unit()
+});
+export type CallFrameChunkType = __Infer<typeof CallFrameChunkType>;
 
 // The tagged union or sum type for the algebraic type `CallFrameSource`.
 export const CallFrameSource = __t.enum("CallFrameSource", {
@@ -41,7 +59,9 @@ export type CallFrameSource = __Infer<typeof CallFrameSource>;
 // The tagged union or sum type for the algebraic type `CallFrameType`.
 export const CallFrameType = __t.enum("CallFrameType", {
     Video: __t.unit(),
-    Audio: __t.unit()
+    get Audio() {
+        return AudioInfo;
+    }
 });
 export type CallFrameType = __Infer<typeof CallFrameType>;
 

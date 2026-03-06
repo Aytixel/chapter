@@ -9,7 +9,7 @@ import {
     type AlgebraicTypeType as __AlgebraicTypeType,
     type Infer as __Infer
 } from "spacetimedb";
-import { CallFrameSource, CallFrameType } from "./types";
+import { CallFrameSource, CallFrameType, CallFrameChunkType } from "./types";
 
 export default __t.row({
     sender: __t.identity(),
@@ -19,5 +19,10 @@ export default __t.row({
     get frameType() {
         return CallFrameType.name("frame_type");
     },
+    codec: __t.string(),
+    get chunkType() {
+        return CallFrameChunkType.name("chunk_type");
+    },
+    timestamp: __t.u32(),
     data: __t.byteArray()
 });

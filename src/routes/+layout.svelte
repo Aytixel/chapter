@@ -2,8 +2,8 @@
     import "./layout.css";
     import favicon from "$lib/assets/favicon.svg";
     import { createSpacetimeDBProvider, useSpacetimeDB } from "spacetimedb/svelte";
-    import type { Identity } from "spacetimedb";
-    import { DbConnection, type ErrorContext } from "$lib/module_bindings";
+    import { toSql, type Identity } from "spacetimedb";
+    import { DbConnection, tables, type ErrorContext } from "$lib/module_bindings";
     import { Separator } from "$lib/components/ui/separator";
     import Sidebar from "$lib/components/sidebar.svelte";
     import { TooltipProvider } from "$lib/components/ui/tooltip";
@@ -36,6 +36,17 @@
     createSpacetimeDBProvider(connectionBuilder);
 
     const conn = useSpacetimeDB();
+
+    $effect(() => {
+        const connection = $conn.getConnection();
+
+        if (connection?.isActive) {
+            connection.db[tables.call_frames.accessorName].onInsert((_, call_frame) => {
+                console.log(call_frame);
+            });
+            connection.subscriptionBuilder().subscribe(toSql(tables.call_frames));
+        }
+    });
 
     const { children } = $props();
 </script>

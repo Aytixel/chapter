@@ -10,7 +10,7 @@ import {
     type Infer as __Infer
 } from "spacetimedb";
 
-import { CallFrameSource, CallFrameType } from "./types";
+import { CallFrameSource, CallFrameType, CallFrameChunkType } from "./types";
 
 export default {
     get frameSource() {
@@ -19,5 +19,10 @@ export default {
     get frameType() {
         return CallFrameType;
     },
+    codec: __t.string(),
+    get chunkType() {
+        return CallFrameChunkType;
+    },
+    timestamp: __t.u32(),
     data: __t.byteArray()
 };

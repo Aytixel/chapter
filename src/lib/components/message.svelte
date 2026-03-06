@@ -95,18 +95,14 @@
         </ContextMenuTrigger>
         {#if is_me}
             <ContextMenuContent>
-                <ContextMenuItem
-                    class="flex justify-between"
-                    onclick={() => (modified_message = message.message)}
-                >
-                    Modifier <SquarePen />
+                <ContextMenuItem onclick={() => (modified_message = message.message)}>
+                    <SquarePen /> Modifier
                 </ContextMenuItem>
                 <ContextMenuItem
-                    class="flex justify-between"
                     variant="destructive"
                     onclick={() => deleteMessage({ messageId: message.id })}
                 >
-                    Supprimer <Trash />
+                    <Trash /> Supprimer
                 </ContextMenuItem>
             </ContextMenuContent>
         {/if}
