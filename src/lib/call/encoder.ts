@@ -4,7 +4,7 @@ import {
     CallFrameType,
     type CallFrameSource
 } from "$lib/module_bindings/types";
-import AudioEncoderWorklet from "./audio-encoder-worklet.js?raw";
+import AudioEncoderWorklet from "./audio-encoder-worklet.js?url";
 
 const VIDEO_CODEC = "av01.0.12M.08";
 const AUDIO_CODEC = "opus";
@@ -17,6 +17,7 @@ export class Encoder {
     #source: CallFrameSource;
     #video_encoder?: VideoEncoder;
     #audio_encoder?: AudioEncoder;
+    #audio_context?: AudioContext;
 
     constructor(conn: DbConnection | null, stream: MediaStream, source: CallFrameSource) {
         if (!conn) throw "Can't encode stream if there is no db connection";
@@ -40,6 +41,10 @@ export class Encoder {
         if (this.#audio_encoder && this.#audio_encoder.state != "closed") {
             this.#audio_encoder.close();
             this.#audio_encoder = undefined;
+        }
+        if (this.#audio_context && this.#audio_context.state != "closed") {
+            this.#audio_context.close();
+            this.#audio_context = undefined;
         }
 
         for (const track of this.#stream.getTracks()) {
@@ -135,20 +140,17 @@ export class Encoder {
             opus: { application: "voip" }
         });
 
-        const audio_context = new AudioContext({
+        this.#audio_context = new AudioContext({
             sampleRate: settings.sampleRate || DEFAULT_SAMPLE_RATE,
             latencyHint: "interactive"
         });
-        const source = new MediaStreamAudioSourceNode(audio_context, {
+        const source = new MediaStreamAudioSourceNode(this.#audio_context, {
             mediaStream: new MediaStream([track])
         });
 
-        const blob = new Blob([AudioEncoderWorklet], { type: "application/javascript" });
-        const worklet_url = URL.createObjectURL(blob);
+        await this.#audio_context.audioWorklet.addModule(AudioEncoderWorklet);
 
-        await audio_context.audioWorklet.addModule(worklet_url);
-
-        const worklet_node = new AudioWorkletNode(audio_context, "audio-encoder-worklet", {
+        const worklet_node = new AudioWorkletNode(this.#audio_context, "audio-encoder-worklet", {
             numberOfInputs: 1,
             numberOfOutputs: 0,
             channelCount: settings.channelCount || DEFAULT_NUMBER_OF_CHANNELS
@@ -157,11 +159,13 @@ export class Encoder {
         source.connect(worklet_node);
 
         worklet_node.port.onmessage = (event) => {
-            if (!this.#audio_encoder) return;
+            if (!this.#audio_encoder || !this.#audio_context) {
+                worklet_node.port.onmessage = () => {};
+                return;
+            }
 
             const { timestamp, channels }: { timestamp: number; channels: Float32Array[] } =
                 event.data;
-
             const data = new Float32Array(channels[0].length * channels.length);
 
             for (let i = 0; i < channels.length; i++) {
@@ -169,12 +173,13 @@ export class Encoder {
             }
 
             const audio_data = new AudioData({
-                format: "f32-planar",
-                sampleRate: audio_context.sampleRate,
-                numberOfFrames: channels[0].length * channels.length,
+                format: "f32",
+                sampleRate: settings.sampleRate || DEFAULT_SAMPLE_RATE,
+                numberOfFrames: channels[0].length,
                 numberOfChannels: settings.channelCount || DEFAULT_NUMBER_OF_CHANNELS,
                 timestamp,
-                data
+                data,
+                transfer: [data.buffer]
             });
 
             this.#audio_encoder.encode(audio_data);

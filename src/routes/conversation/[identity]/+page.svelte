@@ -36,6 +36,43 @@
     const startCall = useReducer(reducers.startCall);
     const stopCall = useReducer(reducers.stopCall);
 
+    // This may break in the future or may not be needed anymore
+    // This fixes a problem with a view not well when users disconnects
+    $effect(() => {
+        const connection = $conn.getConnection();
+
+        if (connection) {
+            connection.db[tables.user.accessorName].onUpdate(((
+                ctx,
+                _oldRow: User,
+                newRow: User
+            ) => {
+                if (newRow.status.tag != "Offline") return;
+
+                const cacheRow: [string, [Call, number]] | undefined = ctx.db[
+                    tables.calls.accessorName
+                ].rows
+                    .entries()
+                    .find(([_key, [call]]: [string, [Call, number]]) =>
+                        call.sender.isEqual(newRow.identity)
+                    );
+
+                if (!cacheRow) return;
+
+                ctx.db[tables.calls.accessorName]
+                    .delete(
+                        ctx,
+                        {
+                            rowId: cacheRow[0],
+                            row: cacheRow[1][0]
+                        },
+                        cacheRow[1][1]
+                    )
+                    ?.cb();
+            }) as (ctx: any, oldRow: any, newRow: any) => void);
+        }
+    });
+
     const users_map = $derived(getUsersMap($users as User[]));
 
     const { user, username, group, groupname, receiver } = $derived.by(() => {

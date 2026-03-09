@@ -1,12 +1,13 @@
 <script lang="ts">
     import "./layout.css";
     import favicon from "$lib/assets/favicon.svg";
-    import { createSpacetimeDBProvider, useSpacetimeDB } from "spacetimedb/svelte";
-    import { toSql, type Identity } from "spacetimedb";
-    import { DbConnection, tables, type ErrorContext } from "$lib/module_bindings";
+    import { createSpacetimeDBProvider } from "spacetimedb/svelte";
+    import { type Identity } from "spacetimedb";
+    import { DbConnection, type ErrorContext } from "$lib/module_bindings";
     import { Separator } from "$lib/components/ui/separator";
     import Sidebar from "$lib/components/sidebar.svelte";
     import { TooltipProvider } from "$lib/components/ui/tooltip";
+    import { createDecoderProvider } from "$lib/call/decoder";
 
     const HOST = import.meta.env.VITE_SPACETIMEDB_HOST ?? "ws://localhost:3000";
     const DB_NAME = import.meta.env.VITE_SPACETIMEDB_DB_NAME ?? "chapter";
@@ -33,20 +34,9 @@
         .onDisconnect(onDisconnect)
         .onConnectError(onConnectError);
 
-    createSpacetimeDBProvider(connectionBuilder);
+    const conn = createSpacetimeDBProvider(connectionBuilder);
 
-    const conn = useSpacetimeDB();
-
-    $effect(() => {
-        const connection = $conn.getConnection();
-
-        if (connection?.isActive) {
-            connection.db[tables.call_frames.accessorName].onInsert((_, call_frame) => {
-                console.log(call_frame);
-            });
-            connection.subscriptionBuilder().subscribe(toSql(tables.call_frames));
-        }
-    });
+    createDecoderProvider(conn);
 
     const { children } = $props();
 </script>

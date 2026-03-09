@@ -6,14 +6,14 @@ class AudioEncoderWorklet extends AudioWorkletProcessor {
             return true;
         }
 
-        const channels = inputs[0];
+        const input = inputs[0];
 
         this.port.postMessage({
             timestamp: (this.sampleCount / sampleRate) * 1_000_000,
-            channels: channels.map((channel) => channel.slice())
+            channels: input.map((channel) => channel.slice())
         });
+        this.sampleCount += input[0].length;
 
-        this.sampleCount += channels[0].length;
         return true;
     }
 }
