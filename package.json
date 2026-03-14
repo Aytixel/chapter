@@ -39,7 +39,7 @@
     },
     "dependencies": {
         "@internationalized/date": "^3.11.0",
-        "spacetimedb": "^2.0.2",
+        "spacetimedb": "^2.0.4",
         "svelte-streamdown": "^3.0.1"
     }
 }
