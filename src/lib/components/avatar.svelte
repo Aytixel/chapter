@@ -23,7 +23,7 @@
 {#snippet avatar()}
     <Avatar {...props} class={["border", variant == "square" && "rounded-md", classname]}>
         <AvatarImage {src} {alt} class="object-cover" />
-        <AvatarFallback class={[variant == "square" && "rounded-md"]}>
+        <AvatarFallback class={["select-none", variant == "square" && "rounded-md"]}>
             {alt &&
                 alt
                     .replace("(Vous)", "")
