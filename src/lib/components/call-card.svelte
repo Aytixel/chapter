@@ -16,8 +16,15 @@
     import { Mic, Monitor } from "@lucide/svelte";
     import { Slider } from "./ui/slider";
     import ContextMenuSeparator from "./ui/context-menu/context-menu-separator.svelte";
+    import type { ClassValue } from "svelte/elements";
+    import type { ContextMenuTriggerProps } from "bits-ui";
+    import Badge from "./ui/badge/badge.svelte";
 
-    const { call }: { call: Call } = $props();
+    const {
+        call,
+        class: classname,
+        ...props
+    }: { call: Call; class?: ClassValue | null } & ContextMenuTriggerProps = $props();
 
     const [user] = useTable(tables.user.where((user) => user.identity.eq(call.sender)));
 
@@ -46,7 +53,11 @@
 {#if $user[0]}
     <ContextMenu>
         <ContextMenuTrigger
-            class="relative flex aspect-video h-48 min-h-0 min-w-0 items-center justify-center overflow-hidden rounded-md border bg-muted/15 [&>div>canvas]:h-full [&>div>canvas]:w-full [&>div>canvas]:object-contain"
+            class={[
+                "relative flex aspect-video h-48 min-h-0 min-w-0 items-center justify-center overflow-hidden rounded-md border bg-[color-mix(in_oklab,var(--muted)_15%,var(--background))] [&>div>canvas]:h-full [&>div>canvas]:w-full [&>div>canvas]:object-contain",
+                classname
+            ]}
+            {...props}
         >
             {#if screen_video}
                 {@render renderElement(screen_video)}
@@ -55,6 +66,10 @@
             {:else}
                 <Avatar src={avatar_url} alt={username} class="size-32 text-5xl" />
             {/if}
+            <Badge
+                class="absolute bottom-0 left-0 rounded-none rounded-tr-md bg-muted/50 px-4 text-sm text-foreground"
+                >{username}</Badge
+            >
         </ContextMenuTrigger>
         <ContextMenuContent class="w-xs" inert>
             <ContextMenuLabel>{username}</ContextMenuLabel>

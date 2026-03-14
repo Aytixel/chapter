@@ -174,6 +174,8 @@
 
         return encoder;
     }
+
+    let fullscreen_call_card = $state<Identity>();
 </script>
 
 <svelte:head>
@@ -273,13 +275,31 @@
     <Separator />
     <div class={["grid h-full min-h-0 gap-3", current_calls.length && "grid-cols-[1fr_auto_18em]"]}>
         {#if current_calls.length}
-            <ScrollArea class="min-h-0 min-w-0">
+            <ScrollArea class="relative min-h-0 min-w-0">
                 <div
                     class="flex min-h-[calc(100dvh-6em)] min-w-0 flex-wrap items-center justify-evenly gap-3"
                 >
                     {#each current_calls as current_call}
                         {#key current_call.sender.toString()}
-                            <CallCard call={current_call} />
+                            <CallCard
+                                call={current_call}
+                                class={[
+                                    "cursor-pointer",
+                                    fullscreen_call_card?.isEqual(current_call.sender) &&
+                                        "absolute! top-0 right-0 bottom-0 left-0 z-10 h-auto"
+                                ]}
+                                onclick={(e) => {
+                                    if (e.button == 0) {
+                                        e.preventDefault();
+                                        console.log(fullscreen_call_card);
+                                        fullscreen_call_card =
+                                            fullscreen_call_card &&
+                                            fullscreen_call_card.isEqual(current_call.sender)
+                                                ? undefined
+                                                : current_call.sender;
+                                    }
+                                }}
+                            />
                         {/key}
                     {/each}
                 </div>
