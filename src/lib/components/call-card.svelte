@@ -19,6 +19,7 @@
     import type { ClassValue } from "svelte/elements";
     import type { ContextMenuTriggerProps } from "bits-ui";
     import Badge from "./ui/badge/badge.svelte";
+    import { preventDefault } from "svelte/legacy";
 
     const {
         call,
@@ -48,6 +49,19 @@
         render: () => "<div></div>",
         setup: (node) => node.append(canvas())
     }));
+
+    let camera_audio_gain = $state(0);
+    let screen_audio_gain = $state(0);
+
+    $effect(() => {
+        if (camera_audio) camera_audio_gain = camera_audio.gain;
+        if (screen_audio) screen_audio_gain = screen_audio.gain;
+    });
+
+    $effect(() => {
+        if (camera_audio) camera_audio.gain = camera_audio_gain;
+        if (screen_audio) screen_audio.gain = screen_audio_gain;
+    });
 </script>
 
 {#if $user[0]}
@@ -60,9 +74,9 @@
             {...props}
         >
             {#if screen_video}
-                {@render renderElement(screen_video)}
+                {@render renderElement(screen_video.canvas)}
             {:else if camera_video}
-                {@render renderElement(camera_video)}
+                {@render renderElement(camera_video.canvas)}
             {:else}
                 <Avatar src={avatar_url} alt={username} class="size-32 text-5xl" />
             {/if}
@@ -71,7 +85,7 @@
                 >{username}</Badge
             >
         </ContextMenuTrigger>
-        <ContextMenuContent class="w-xs" inert>
+        <ContextMenuContent class="w-xs">
             <ContextMenuLabel>{username}</ContextMenuLabel>
             {#if camera_audio || screen_audio}
                 <ContextMenuSeparator />
@@ -81,9 +95,9 @@
                     <Mic />
                     <Slider
                         type="single"
-                        bind:value={camera_audio.gain.value}
+                        bind:value={camera_audio_gain}
                         min={0}
-                        max={1.5}
+                        max={2}
                         step={0.01}
                     />
                 </ContextMenuItem>
@@ -93,9 +107,9 @@
                     <Monitor />
                     <Slider
                         type="single"
-                        bind:value={screen_audio.gain.value}
+                        bind:value={screen_audio_gain}
                         min={0}
-                        max={1.5}
+                        max={2}
                         step={0.01}
                     />
                 </ContextMenuItem>

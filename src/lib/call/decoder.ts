@@ -112,6 +112,7 @@ export class Decoder {
         let decoder = this.#audio_decoders.get(key);
 
         if (decoder === undefined) {
+            const key = `${call_frame.frameSource.tag}:${call_frame.sender.toString()}`;
             const context = new AudioContext({
                 sampleRate: call_frame.frameType.value.sampleRate,
                 latencyHint: "interactive"
@@ -120,6 +121,9 @@ export class Decoder {
 
             let base_timestamp: null | number = null;
             let base_time: null | number = null;
+
+            if (localStorage.getItem(`Gain:${key}`))
+                gain_node.gain.value = parseFloat(localStorage.getItem(`Gain:${key}`) || "");
 
             gain_node.connect(context.destination);
 
@@ -181,18 +185,34 @@ export class Decoder {
 
         if (decoder.timeout) clearTimeout(decoder.timeout);
 
-        decoder.timeout = setTimeout(() => this.#audio_decoders.delete(key), 2000);
+        decoder.timeout = setTimeout(() => this.#audio_decoders.delete(key), 100);
     }
 
-    getVideo(identity: Identity, frame_source: CallFrameSource): HTMLCanvasElement | undefined {
+    getVideo(identity: Identity, frame_source: CallFrameSource) {
         const key = `${frame_source.tag}:${identity.toString()}`;
+        const decoder = this.#video_decoders.get(key);
 
-        return this.#video_decoders.get(key)?.canvas;
+        return (
+            decoder && {
+                canvas: decoder.canvas
+            }
+        );
     }
 
-    getAudio(identity: Identity, frame_source: CallFrameSource): GainNode | undefined {
+    getAudio(identity: Identity, frame_source: CallFrameSource) {
         const key = `${frame_source.tag}:${identity.toString()}`;
+        const decoder = this.#audio_decoders.get(key);
 
-        return this.#audio_decoders.get(key)?.gain_node;
+        return (
+            decoder && {
+                get gain() {
+                    return decoder.gain_node.gain.value;
+                },
+                set gain(gain) {
+                    decoder.gain_node.gain.value = gain;
+                    localStorage.setItem(`Gain:${key}`, gain.toString());
+                }
+            }
+        );
     }
 }
