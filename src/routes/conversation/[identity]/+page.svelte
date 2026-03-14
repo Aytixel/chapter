@@ -280,27 +280,29 @@
                     class="flex min-h-[calc(100dvh-6em)] min-w-0 flex-wrap items-center justify-evenly gap-3"
                 >
                     {#each current_calls as current_call}
-                        {#key current_call.sender.toString()}
-                            <CallCard
-                                call={current_call}
-                                class={[
-                                    "cursor-pointer",
-                                    fullscreen_call_card?.isEqual(current_call.sender) &&
-                                        "absolute! top-0 right-0 bottom-0 left-0 z-10 h-auto"
-                                ]}
-                                onclick={(e) => {
-                                    if (e.button == 0) {
-                                        e.preventDefault();
-                                        console.log(fullscreen_call_card);
-                                        fullscreen_call_card =
-                                            fullscreen_call_card &&
-                                            fullscreen_call_card.isEqual(current_call.sender)
-                                                ? undefined
-                                                : current_call.sender;
-                                    }
-                                }}
-                            />
-                        {/key}
+                        {#if fullscreen_call_card === undefined || fullscreen_call_card.isEqual(current_call.sender)}
+                            {#key current_call.sender.toString()}
+                                <CallCard
+                                    call={current_call}
+                                    class={[
+                                        "cursor-pointer",
+                                        fullscreen_call_card?.isEqual(current_call.sender) &&
+                                            "absolute! top-0 right-0 bottom-0 left-0 z-10 h-auto"
+                                    ]}
+                                    onclick={(e) => {
+                                        if (e.button == 0) {
+                                            e.preventDefault();
+                                            console.log(fullscreen_call_card);
+                                            fullscreen_call_card =
+                                                fullscreen_call_card &&
+                                                fullscreen_call_card.isEqual(current_call.sender)
+                                                    ? undefined
+                                                    : current_call.sender;
+                                        }
+                                    }}
+                                />
+                            {/key}
+                        {/if}
                     {/each}
                 </div>
             </ScrollArea>
