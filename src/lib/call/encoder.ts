@@ -85,7 +85,10 @@ export class Encoder {
                 });
                 const newKeyFrameCount = Math.floor(timestamp / (1_000 * 2));
 
-                this.#video_encoder.encode(frame, { keyFrame: newKeyFrameCount != keyFrameCount });
+                if (this.#video_encoder.encodeQueueSize < 3)
+                    this.#video_encoder.encode(frame, {
+                        keyFrame: newKeyFrameCount != keyFrameCount
+                    });
 
                 keyFrameCount = newKeyFrameCount;
 
