@@ -47,7 +47,7 @@
     <ItemMedia class="relative translate-0!">
         <EditUserDialog {user}>
             {#snippet child({ props })}
-                <Avatar {...props} src={avatar_url} alt={username} />
+                <Avatar {...props} src={avatar_url} alt={username} class="cursor-pointer" />
                 <div
                     class={["absolute right-0 bottom-0 size-2.5 rounded-full border", status_color]}
                 ></div>
