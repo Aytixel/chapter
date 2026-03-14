@@ -8,10 +8,13 @@ class AudioEncoderWorklet extends AudioWorkletProcessor {
 
         const input = inputs[0];
 
-        this.port.postMessage({
-            timestamp: (this.sampleCount / sampleRate) * 1_000_000,
-            channels: input.map((channel) => channel.slice())
-        });
+        this.port.postMessage(
+            {
+                timestamp: (this.sampleCount / sampleRate) * 1_000_000,
+                channels: input
+            },
+            input.map((channel) => channel.buffer)
+        );
         this.sampleCount += input[0].length;
 
         return true;
