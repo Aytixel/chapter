@@ -262,8 +262,6 @@
                     size="icon"
                     class="cursor-pointer"
                     onclick={() => {
-                        sharing_camera = stop_capture(sharing_camera);
-                        sharing_screen = stop_capture(sharing_screen);
                         if (!is_my_call && receiver) startCall({ receiver });
                     }}
                 >
@@ -292,7 +290,7 @@
                                     onclick={(e) => {
                                         if (e.button == 0) {
                                             e.preventDefault();
-                                            console.log(fullscreen_call_card);
+
                                             fullscreen_call_card =
                                                 fullscreen_call_card &&
                                                 fullscreen_call_card.isEqual(current_call.sender)
