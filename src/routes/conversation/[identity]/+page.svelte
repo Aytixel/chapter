@@ -100,10 +100,6 @@
         };
     });
 
-    $effect(() => {
-        if (!receiver) location.href = "/";
-    });
-
     function shouldDisplay(element_sender: Identity, element_receiver: ReceiverIdentity): boolean {
         if (!receiver || !$conn.identity) return false;
 
