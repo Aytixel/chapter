@@ -5,6 +5,8 @@ import type { ConnectionState } from "spacetimedb/angular";
 import { getContext, setContext } from "svelte";
 import { SvelteMap } from "svelte/reactivity";
 import { writable, type Readable, type Writable } from "svelte/store";
+import VideoDecoderWorkerUrl from "./video-decoder-worker?url";
+import type { VideoDecoderWorkerCommand } from "./video-decoder-worker";
 
 const DECODER_CONTEXT_KEY = "decoder";
 const AUDIO_BUFFER_DELAY = 0.02;
@@ -28,9 +30,8 @@ export class Decoder {
     #video_decoders: SvelteMap<
         string,
         {
-            decoder: VideoDecoder;
+            worker: Worker;
             canvas: HTMLCanvasElement;
-            has_key_frame: boolean;
             timeout?: number;
         }
     >;
@@ -68,36 +69,29 @@ export class Decoder {
 
         if (decoder === undefined) {
             const canvas = document.createElement("canvas");
-            const context = canvas.getContext("2d", {
-                alpha: false
-            }) as CanvasRenderingContext2D;
+            const offscreenCanvas = canvas.transferControlToOffscreen();
+            const worker = new Worker(VideoDecoderWorkerUrl);
 
             decoder = {
-                decoder: new VideoDecoder({
-                    output: (video_frame) => {
-                        canvas.height = video_frame.displayHeight;
-                        canvas.width = video_frame.displayWidth;
-
-                        context.drawImage(video_frame, 0, 0);
-                        video_frame.close();
-                    },
-                    error: console.error
-                }),
-                canvas,
-                has_key_frame: false
+                worker,
+                canvas
             };
-            decoder.decoder.configure({ codec: call_frame.codec });
+
+            worker.postMessage(
+                {
+                    command: "configuration",
+                    canvas: offscreenCanvas,
+                    codec: call_frame.codec
+                } satisfies VideoDecoderWorkerCommand,
+                [offscreenCanvas]
+            );
             this.#video_decoders.set(key, decoder);
         }
 
-        if ((decoder.has_key_frame ||= call_frame.chunkType.tag == "Key"))
-            decoder?.decoder.decode(
-                new EncodedVideoChunk({
-                    type: call_frame.chunkType.tag == "Key" ? "key" : "delta",
-                    data: call_frame.data,
-                    timestamp: call_frame.timestamp
-                })
-            );
+        decoder.worker.postMessage(
+            { ...call_frame, command: "frame" } satisfies VideoDecoderWorkerCommand,
+            [call_frame.data.buffer]
+        );
 
         if (decoder.timeout) clearTimeout(decoder.timeout);
 
