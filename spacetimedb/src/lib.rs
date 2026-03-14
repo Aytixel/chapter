@@ -54,7 +54,7 @@ pub struct User {
     groups: Vec<u256>,
 }
 
-#[derive(SpacetimeType)]
+#[derive(SpacetimeType, PartialEq, Eq)]
 pub enum UserStatus {
     Online,
     Offline { at: Timestamp },
@@ -377,7 +377,7 @@ fn check_in_group(ctx: &ReducerContext, group: &Group) -> Result<(), String> {
         .iter()
         .all(|user_identity| user_identity != &ctx.sender())
     {
-        return Err("Cannot send message to groups you are not part of".to_string());
+        return Err("Your are not part of this group".to_string());
     }
 
     Ok(())
@@ -486,11 +486,11 @@ pub fn update_message(
 #[spacetimedb::reducer]
 pub fn delete_message(ctx: &ReducerContext, message_id: u256) -> Result<(), String> {
     let Some(old_message) = ctx.db.message().id().find(message_id) else {
-        return Err("Cannot update unknown message".to_string());
+        return Err("Cannot delete unknown message".to_string());
     };
 
     if old_message.sender != ctx.sender() {
-        return Err("Cannot update message sent by another".to_string());
+        return Err("Cannot delete message sent by another".to_string());
     }
 
     ctx.db.message().delete(old_message);
@@ -546,7 +546,7 @@ fn calls(ctx: &ViewContext) -> Vec<Call> {
 #[spacetimedb::reducer]
 fn start_call(ctx: &ReducerContext, receiver: ReceiverIdentity) -> Result<(), String> {
     let Some(user) = get_user(ctx, ctx.sender()) else {
-        return Err("Cannot create group for unknown user".to_string());
+        return Err("Cannot start call for unknown user".to_string());
     };
 
     ctx.db.call().sender().delete(ctx.sender());
@@ -566,7 +566,7 @@ fn start_call(ctx: &ReducerContext, receiver: ReceiverIdentity) -> Result<(), St
 #[spacetimedb::reducer]
 fn stop_call(ctx: &ReducerContext) -> Result<(), String> {
     let Some(user) = get_user(ctx, ctx.sender()) else {
-        return Err("Cannot create group for unknown user".to_string());
+        return Err("Cannot stop call for unknown user".to_string());
     };
 
     ctx.db.call().sender().delete(ctx.sender());
