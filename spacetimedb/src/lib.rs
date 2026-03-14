@@ -622,7 +622,18 @@ fn call_frames(ctx: &ViewContext) -> Vec<CallFrame> {
 
     match call.receiver {
         ReceiverIdentity::User { identity } => {
-            let call_frame_from_me = ctx.db.call_frame().sender().find(ctx.sender());
+            let call_frame_from_me =
+                ctx.db
+                    .call_frame()
+                    .sender()
+                    .find(ctx.sender())
+                    .filter(|call_frame| {
+                        if let CallFrameType::Video = call_frame.frame_type {
+                            return true;
+                        }
+
+                        false
+                    });
             let call_frame_from_other = ctx.db.call().sender().find(identity).and_then(|call| {
                 if (call.receiver
                     == ReceiverIdentity::User {
@@ -647,6 +658,16 @@ fn call_frames(ctx: &ViewContext) -> Vec<CallFrame> {
             .filter(receiver)
             .into_iter()
             .flat_map(|call| ctx.db.call_frame().sender().find(call.sender))
+            .filter(|call_frame| {
+                if call_frame.sender != ctx.sender() {
+                    return true;
+                }
+                if let CallFrameType::Video = call_frame.frame_type {
+                    return true;
+                }
+
+                false
+            })
             .collect(),
     }
 }
